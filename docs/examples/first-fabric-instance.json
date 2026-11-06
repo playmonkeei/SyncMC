@@ -1,0 +1,46 @@
+{
+  "format": "syncmc-manifest",
+  "version": 1,
+  "instances": [
+    {
+      "id": "first-fabric",
+      "name": "Fabric · Erste Instanz",
+      "mcVersion": "1.21.1",
+      "loader": "fabric",
+      "loaderVersion": "0.20.1",
+      "cover": "redwood",
+      "contents": [
+        {
+          "dependency": true,
+          "enabled": true,
+          "filename": "sodium-fabric-0.8.13+mc1.21.1.jar",
+          "iconUrl": "https://cdn.modrinth.com/data/AANobbMI/295862f4724dc3f78df3447ad6072b2dcd3ef0c9_96.webp",
+          "id": "dep-AANobbMI",
+          "kind": "mod",
+          "name": "Sodium",
+          "projectId": "AANobbMI",
+          "sha512": "8614a374593698069a80ac74de8cd9c28f3928d16819a0e0d6320b538e823f7e54e8be06d5ea5a9c268beb0e02073209d1f831a02dede851588b972367680853",
+          "source": "modrinth",
+          "status": "planned",
+          "version": "mc1.21.1-0.8.13-fabric",
+          "versionId": "SMxNOGZ6"
+        },
+        {
+          "enabled": true,
+          "filename": "sodium-extra-fabric-0.9.5+mc1.21.1.jar",
+          "iconUrl": "https://cdn.modrinth.com/data/PtjYWJkn/0df4fb22a11e1dcb5e83cb0aadd275b571aca7a9_96.webp",
+          "id": "item-PtjYWJkn",
+          "kind": "mod",
+          "name": "Sodium Extra",
+          "projectId": "PtjYWJkn",
+          "sha512": "2587475562472b7e5cdc8c2b4409de498815402156524242acbad9672a0c348288b9b3328ec82b9300593d1a02eb71022704742889e5b33b755f75709cf16827",
+          "source": "modrinth",
+          "status": "planned",
+          "version": "mc1.21.1-0.9.5+fabric",
+          "versionId": "CmiqMBZT"
+        }
+      ],
+      "servers": []
+    }
+  ]
+}

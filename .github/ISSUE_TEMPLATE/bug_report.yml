@@ -1,0 +1,59 @@
+name: Fehler melden
+description: Hilf mit, SyncMC zuverlässiger zu machen.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Danke für deinen Bericht! SyncMC ist ein früher Prototyp. Bekannte Einschränkungen stehen in der README.
+        Bitte keine Kontodaten, API-Keys, Anmeldecodes oder Tokens veröffentlichen.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Was ist passiert?
+      description: Beschreibe den Fehler und was du erwartet hast.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: So lässt sich der Fehler reproduzieren
+      placeholder: |
+        1. SyncMC starten
+        2. … öffnen
+        3. … auswählen
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Betriebssystem
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Umgebung
+      options:
+        - Desktop-App (Tauri)
+        - Lokale Browser-Vorschau
+        - Build / Entwicklung
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version / Commit und Systemdetails
+      description: Zum Beispiel SyncMC-Commit, OS-Version und Architektur (ARM64 / x64).
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots oder bereinigte Logs
+      description: Entferne persönliche Daten und Zugangsdaten, bevor du Dateien oder Logs anhängst.

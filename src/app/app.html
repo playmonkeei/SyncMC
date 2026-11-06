@@ -1,0 +1,390 @@
+<div class="app-shell" [attr.inert]="dialog() || confirmation() ? '' : null" [class.scenic-home]="page() === 'start'" [class.browsing-instance]="page() === 'instances' && catalogVisible()" [style.--scene-image]="sceneImage()" (document:keydown.escape)="onEscape($event)">
+  <div class="scene-backdrop" aria-hidden="true"></div>
+  <div class="scene-shade" aria-hidden="true"></div>
+  <aside class="sidebar" aria-label="Hauptnavigation">
+    <button class="brand" (click)="navigate('start')" aria-label="SyncMC Start"><img src="/assets/mark-small.png" alt=""><span>SyncMC</span></button>
+    <nav>
+      @for (item of nav; track item.page) {
+        <button class="nav-item" [attr.aria-label]="item.label" [class.selected]="page() === item.page" [attr.aria-current]="page() === item.page ? 'page' : null" (click)="navigate(item.page)"><i class="ph ph-{{ item.icon }}" aria-hidden="true"></i><span>{{ item.label }}</span></button>
+      }
+    </nav>
+    <div class="sidebar-bottom">
+      <span class="prototype-label">v0.1 <span>·</span> Prototyp</span>
+      <button class="nav-item" aria-label="Einstellungen" [class.selected]="page() === 'settings'" (click)="navigate('settings')"><i class="ph ph-gear-six" aria-hidden="true"></i><span>Einstellungen</span></button>
+      <div class="account"><span class="account-icon"><i aria-hidden="true" class="ph ph-user"></i></span><div><strong>{{ account()?.name ?? 'Dein Workspace' }}</strong><small>{{ account() ? 'Minecraft verbunden' : 'Auf diesem Gerät' }}</small></div><i aria-hidden="true" class="ph ph-caret-down"></i></div>
+    </div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <div class="breadcrumb"><span>{{ title() }}</span>@if(page() === 'instances' && s.selected(); as instance) { <span class="slash">/</span><strong>{{ instance.name }}</strong> }</div>
+      <button class="save-state" (click)="navigate('sync')" title="Geräte und Sync öffnen"><span class="status-dot" [class.unsaved]="s.persistenceError()"></span><span>{{ s.persistenceError() ? 'Nicht gespeichert' : 'Lokal gespeichert' }}</span><span class="bar-separator"></span><i aria-hidden="true" class="ph ph-desktop"></i></button>
+    </header>
+    @if(s.persistenceError()) { <div class="storage-warning" role="alert">{{ s.persistenceError() }}</div> }
+
+    <main>
+      @if(installingInstance(); as installing) {
+        <button class="installation-banner" (click)="openLaunch(installing)" aria-live="polite"><span class="spinner"></span><span>Minecraft {{ installing.mcVersion }} · {{ installStage() }}</span><strong>{{ installProgressPercent() }} %</strong></button>
+      }
+      @if(game().running) {
+        <div class="game-banner" role="status"><i aria-hidden="true" class="ph ph-game-controller"></i><span>Minecraft läuft · {{ runningInstanceName() }}</span><button class="text-button" (click)="openLogs()">Spielprotokoll</button><button class="button glass" [disabled]="gameStopping() || gameStopRequested()" (click)="stopGame()">{{ gameStopping() || gameStopRequested() ? 'Beenden angefordert …' : 'Spiel beenden' }}</button>@if(gameStopRequested()) { <button class="text-button danger-action" (click)="stopGame(true)">Beenden erzwingen</button> }</div>
+      }
+      @if(page() === 'start') {
+        @if(s.selected(); as instance) {
+          <section class="home" [style.background-image]="'url(' + cover(instance) + ')'" aria-label="Aktuelle Instanz">
+            <div class="home-info"><p class="eyebrow">DEINE AKTUELLE INSTANZ</p><h1>{{ instance.name }}</h1><p class="home-meta">{{ instance.mcVersion }} <span>·</span> {{ loaderLabel(instance.loader) }}</p>
+              <div class="home-actions"><button class="button primary play" (click)="openLaunch()"><i aria-hidden="true" class="ph ph-play"></i>Spielen</button><button class="button glass" (click)="openInstance()"><i aria-hidden="true" class="ph ph-folder-open"></i>Instanz öffnen</button><button class="home-sync" (click)="navigate('sync')"><i aria-hidden="true" class="ph ph-check-circle"></i>Lokal gespeichert</button></div>
+
+            </div>
+            <section class="quick-switch" aria-label="Instanz wechseln"><div class="switch-title">Schnell wechseln<span>{{ s.instances().length }}</span></div>
+              @for(other of s.instances(); track other.id) { <button class="instance-choice" [class.active]="instance.id === other.id" (click)="select(other.id)"><img [src]="thumb(other)" alt=""><span><strong>{{ other.name }}</strong><small>{{ other.mcVersion }} · {{ loaderLabel(other.loader) }}</small></span>@if(instance.id === other.id) { <i aria-hidden="true" class="ph ph-check"></i> }</button> }
+              <button class="new-instance" (click)="openCreate()"><i aria-hidden="true" class="ph ph-plus"></i>Neue Instanz</button>
+            </section>
+          </section>
+        } @else { <section class="empty-page"><i aria-hidden="true" class="ph ph-stack"></i><h1>Dein nächstes Abenteuer.</h1><p>Lege deine erste Instanz an und stelle dein Minecraft zusammen.</p><button class="button primary" (click)="openCreate()">Instanz anlegen</button></section> }
+      }
+
+      @if(page() === 'instances') {
+        @if(s.selected(); as instance) {
+          <section class="instance-banner" [style.background-image]="'url(' + cover(instance) + ')'">
+            <div class="banner-content"><div class="instance-heading"><img src="/assets/mark-small.png" alt=""><div><h1>{{ instance.name }}</h1><p>{{ instance.mcVersion }} · {{ loaderLabel(instance.loader) }}</p></div></div><button class="button primary" (click)="openLaunch()"><i aria-hidden="true" class="ph ph-play"></i>Spielen</button></div>
+          </section>
+          <div class="instance-toolbar"><nav class="tabs" aria-label="Instanzbereiche">@for(t of [{id:'overview',label:'Übersicht',icon:'info'}, {id:'contents',label:'Inhalte',icon:'stack'}, {id:'servers',label:'Server',icon:'hard-drives'}, {id:'backups',label:'Sicherungen',icon:'clock-counter-clockwise'}, {id:'settings',label:'Einstellungen',icon:'gear-six'}]; track t.id) { <button [class.active]="tab() === t.id" (click)="setTab(t.id)"><i aria-hidden="true" class="ph ph-{{ t.icon }}"></i>{{ t.label }}</button> }</nav><sync-select class="instance-switcher" label="Instanz auswählen" appearance="compact" [options]="instanceOptions()" [ngModel]="s.selectedId()" (ngModelChange)="select($event)"/><button class="icon-button add-instance-button" aria-label="Neue Instanz" title="Neue Instanz" (click)="openCreate()"><i aria-hidden="true" class="ph ph-plus"></i></button></div>
+          <div class="page-content instance-content">
+            @if(tab() === 'contents') {
+              @if(contentMode() === 'browse') {
+                <section class="inline-catalog" aria-label="Inhalte zur Instanz hinzufügen">
+                  <div class="inline-catalog-heading"><div><button class="catalog-back" (click)="showContentLibrary()"><i aria-hidden="true" class="ph ph-arrow-left"></i>Deine Inhalte<span class="catalog-count">{{ plannedContents() }}</span></button><h2>{{ addContentsTitle() }}</h2></div><div class="catalog-target"><i aria-hidden="true" class="ph ph-stack"></i><div><span class="target-label">FÜR DIESE INSTANZ</span><strong>{{ instance.name }}</strong><small>{{ instance.mcVersion }} · {{ loaderLabel(instance.loader) }}</small></div></div></div>
+                  <ng-container [ngTemplateOutlet]="catalog"/>
+                </section>
+              } @else {
+              <div class="section-heading"><div><h2>Deine Inhalte</h2></div><button class="button primary" data-add-contents (click)="openContentBrowser()"><i aria-hidden="true" class="ph ph-plus"></i>{{ addContentsTitle() }}</button></div>
+              <div class="content-controls"><div class="segments" aria-label="Inhaltstyp">@for(k of kinds; track k.id) { <button [class.active]="kind() === k.id" (click)="setKind(k.id)">{{ k.label }}</button> }</div><label class="search-input small"><i aria-hidden="true" class="ph ph-magnifying-glass"></i><input aria-label="Inhalte durchsuchen" placeholder="Inhalte durchsuchen" [ngModel]="contentQuery()" (ngModelChange)="contentQuery.set($event)"></label></div>
+              @if(kind() === 'datapack') { <div class="inline-note"><i aria-hidden="true" class="ph ph-info"></i>Data Packs gehören zu einer Welt oder einem Server. Die Zuordnung zu lokalen Welten folgt später.</div> }
+              <div class="content-table"><div class="table-heading"><span>Inhalt</span><span>Version</span><span>Quelle</span><span>Aktiv</span></div>
+                @for(content of filteredContents(); track content.id) { <div class="content-row"><div class="content-name">@if(content.iconUrl) { <img [src]="content.iconUrl" alt="" loading="lazy"> } @else { <span class="mod-icon"><i aria-hidden="true" class="ph ph-{{ iconFor(content.name) }}"></i></span> }<span><strong>{{ content.name }}</strong><small>{{ content.versionId.startsWith('demo-') ? 'Beispielinhalt' : content.filename }}</small></span></div><div class="content-version"><span>{{ content.versionId.startsWith('demo-') ? 'Noch nicht gewählt' : content.version }}</span><small>{{ content.dependency ? 'Pflichtabhängigkeit' : content.status === 'downloaded' ? 'Heruntergeladen' : 'Vorgemerkt' }}</small>@if(content.versionId.startsWith('demo-')) { <button class="text-button" [disabled]="selectedLocked()" (click)="chooseExample(content.id)">Version wählen</button> }</div><span class="provider-label" [class.curseforge-provider]="content.source === 'curseforge'"><i aria-hidden="true" class="ph" [class.ph-circles-three]="content.source === 'modrinth'" [class.ph-cube]="content.source === 'curseforge'"></i>{{ providerLabel(content.source) }}</span><div class="row-actions"><button class="toggle" role="switch" [attr.aria-checked]="content.enabled" [attr.aria-label]="content.name + ' aktivieren'" [class.on]="content.enabled" [disabled]="selectedLocked() || !!content.dependency" (click)="s.toggleContent(content.id)"><span></span></button><button class="icon-button quiet" [attr.aria-label]="content.name + ' entfernen'" [disabled]="selectedLocked() || !!content.dependency" (click)="s.removeContent(content.id)"><i aria-hidden="true" class="ph ph-trash"></i></button></div></div> }
+                @empty { <div class="empty-state"><i aria-hidden="true" class="ph ph-package"></i><h3>Noch nichts dabei.</h3><p>Entdecke passende Inhalte für {{ instance.name }}.</p><button class="button glass" (click)="openContentBrowser()">Passende Inhalte suchen<i aria-hidden="true" class="ph ph-arrow-right"></i></button></div> }
+              </div>
+              @if(kind() === 'mod') {
+                <section class="maintenance-card mod-updates" aria-labelledby="mod-updates-title">
+                  <div class="maintenance-heading"><div><h3 id="mod-updates-title">Mod-Updates</h3><p>Prüft passende Releases für Minecraft {{ instance.mcVersion }} und {{ loaderLabel(instance.loader) }}. Jede Änderung wählst du selbst.</p></div><button class="button glass" [disabled]="updatesChecking() || operationBusy() || !updateableMods().length" (click)="checkModUpdates()"><i aria-hidden="true" class="ph ph-arrows-clockwise"></i>{{ updatesChecking() ? 'Prüfen …' : 'Mod-Updates prüfen' }}</button></div>
+                  @if(updatesChecking()) { <p class="maintenance-status" role="status"><span class="spinner"></span>{{ updatesProgress() }} / {{ updateableMods().length }} Mods geprüft</p> }
+                  @if(updateNotice()) { <p class="success-note" role="status">{{ updateNotice() }}</p> }
+                  @if(updateError()) { <p class="form-error" role="alert">{{ updateError() }}</p> }
+                  @for(update of visibleUpdateChecks(); track update.contentId) {
+                    @if(update.status === 'available') { <div class="mod-update-row"><div><strong>{{ update.name }}</strong><small>{{ providerLabel(update.source) }} · {{ update.currentVersion }} <span aria-hidden="true">→</span> {{ update.candidate?.version_number }} · Release {{ update.candidate?.date_published | date:'dd.MM.yyyy' }}</small></div><button class="button glass" [disabled]="!native || selectedLocked()" (click)="reviewModUpdate(update.contentId)">Version prüfen<i aria-hidden="true" class="ph ph-arrow-right"></i></button></div> }
+                    @else if(update.status === 'error') { <p class="form-error"><strong>{{ update.name }}:</strong> {{ update.message }}</p> }
+                  }
+                  @if(updatesChecked() && updateResultsCurrent() && !availableUpdates().length) { <p class="caption muted">Keine neueren kompatiblen Releases gefunden. Eventuelle Prüfprobleme stehen oben.</p> }
+                  @if(!updateableMods().length) { <p class="caption muted">Wähle zunächst echte Mod-Versionen für diese Instanz aus. Pflichtabhängigkeiten werden automatisch verwaltet.</p> }
+                  <p class="caption muted">Vor einer Änderung des installierten Inhaltsstands wird die Instanz gesichert. Andere ausdrücklich gewählte Mod-Versionen bleiben gepinnt.</p>
+                </section>
+              }
+              <div class="inline-note bottom-note"><i aria-hidden="true" class="ph ph-info"></i>Beim Installieren und vor dem Spielstart werden Inhalte und Pflichtabhängigkeiten geprüft und abgeglichen. Aktivieren, Deaktivieren und Entfernen werden dabei auf die Spieldateien angewendet.</div>
+              }
+            }
+            @if(tab() === 'overview') {
+              <div class="section-heading"><div><h2>Alles für dein Projekt.</h2><p>{{ instance.name }} · Minecraft {{ instance.mcVersion }} mit {{ loaderLabel(instance.loader) }}</p></div></div>
+              <div class="overview-links"><button (click)="setTab('contents')"><i aria-hidden="true" class="ph ph-stack"></i><span><strong>{{ instance.contents.length }} Inhalte im Profil</strong><small>Mods, Shader und Ressourcen verwalten</small></span><i aria-hidden="true" class="ph ph-arrow-right"></i></button><button (click)="setTab('servers')"><i aria-hidden="true" class="ph ph-hard-drives"></i><span><strong>{{ instance.servers.length }} Serverfavoriten</strong><small>Deine Projekte und Communities</small></span><i aria-hidden="true" class="ph ph-arrow-right"></i></button><button (click)="navigate('sync')"><i aria-hidden="true" class="ph ph-cloud"></i><span><strong>Auf diesem Gerät gespeichert</strong><small>Geräteübergreifenden Sync einrichten</small></span><i aria-hidden="true" class="ph ph-arrow-right"></i></button></div>
+            }
+            @if(tab() === 'servers') {
+              <div class="section-heading"><div><h2>Deine Server</h2><p>Ein fester Platz für deine Lieblingswelten.</p></div><button class="button primary" (click)="openServer()"><i aria-hidden="true" class="ph ph-plus"></i>Server hinzufügen</button></div>
+              <div class="server-list">@for(server of instance.servers; track server.id) { <div class="server-row"><span class="server-icon"><i aria-hidden="true" class="ph ph-hard-drives"></i></span><div><strong>{{ server.name }}</strong><small>{{ server.address }}</small></div><button class="button subtle" (click)="copyAddress(server.address)"><i aria-hidden="true" class="ph ph-copy"></i>Adresse kopieren</button><button class="icon-button" [attr.aria-label]="server.name + ' entfernen'" (click)="s.removeServer(server.id)"><i aria-hidden="true" class="ph ph-trash"></i></button></div> } @empty { <div class="empty-state"><i aria-hidden="true" class="ph ph-hard-drives"></i><h3>Dein Server wartet.</h3><p>Füge die Adresse deines ersten Servers hinzu.</p><button class="button glass" (click)="openServer()">Server hinzufügen</button></div> }</div><div class="inline-note bottom-note"><i aria-hidden="true" class="ph ph-info"></i>Favoriten werden im Prototyp lokal gespeichert. Die Übernahme in Minecraft und der Serverbeitritt folgen später.</div>
+            }
+            @if(tab() === 'backups') {
+              <section aria-labelledby="backups-title">
+                <div class="section-heading"><div><h2 id="backups-title">Instanz-Sicherungen</h2><p>Profil, Mods, Konfiguration und lokale Welten gemeinsam wiederherstellen.</p></div><div class="maintenance-actions"><button class="button glass" aria-label="Sicherungen aktualisieren" [disabled]="!native || backupsLoading() || operationBusy()" (click)="loadBackups()"><i aria-hidden="true" class="ph ph-arrows-clockwise"></i></button><button class="button primary" [disabled]="!native || operationBusy() || game().running" (click)="createBackup()"><i aria-hidden="true" class="ph ph-floppy-disk"></i>Sicherung erstellen</button></div></div>
+                @if(!native) { <div class="inline-note"><i aria-hidden="true" class="ph ph-desktop"></i>Instanzdateien kannst du in der Desktop-App sichern und wiederherstellen.</div> }
+                @if(backupOperation()) { <p class="maintenance-status" role="status"><span class="spinner"></span>{{ backupOperation() === 'restore' ? 'Rettungssicherung erstellen und Instanz wiederherstellen …' : 'Instanz sichern …' }}</p> }
+                @if(backupsLoading()) { <p class="maintenance-status" role="status"><span class="spinner"></span>Sicherungen laden …</p> }
+                @if(backupError()) { <p class="form-error" role="alert">{{ backupError() }}</p>@if(s.persistenceError()) { <button class="button glass" [disabled]="exportBusy()" (click)="downloadManifest()">Profile jetzt exportieren<i aria-hidden="true" class="ph ph-download-simple"></i></button> } }
+                @if(backupNotice()) { <p class="success-note" role="status">{{ backupNotice() }}</p> }
+                <div class="backup-list">
+                  @for(backup of backupList(); track backup.id) {
+                    <article class="backup-card"><div class="backup-card-heading"><div><h3>{{ backup.createdAt * 1000 | date:'dd.MM.yyyy · HH:mm:ss' }}</h3><p>{{ backup.profileName }} · Minecraft {{ backup.mcVersion }} · {{ loaderLabel(backup.loader) }}</p></div><span class="badge neutral">{{ backupReason(backup.reason) }}</span></div><p class="backup-scope">{{ backupSections(backup) }}</p><div class="backup-card-footer"><span>{{ backup.contentsCount }} Inhalte · {{ backup.fileCount }} Dateien · {{ formatBytes(backup.totalBytes) }}</span><button class="button glass" [attr.aria-label]="'Sicherung ' + (backup.createdAt * 1000 | date:'dd.MM.yyyy HH:mm:ss') + ' wiederherstellen'" [disabled]="operationBusy() || game().running" (click)="restoreBackup(backup)">Wiederherstellen<i aria-hidden="true" class="ph ph-clock-counter-clockwise"></i></button></div></article>
+                  } @empty { @if(native && !backupsLoading()) { <div class="empty-state"><i aria-hidden="true" class="ph ph-clock-counter-clockwise"></i><h3>Noch keine Sicherung.</h3><p>Erstelle einen Stand, bevor du größere Änderungen an dieser Instanz vornimmst.</p></div> } }
+                </div>
+                <div class="inline-note bottom-note"><i aria-hidden="true" class="ph ph-info"></i>Sicherungen enthalten den vollständigen lokalen Instanzordner, einschließlich vorhandener Welten, Einstellungen und Ressourcen. Gemeinsam genutzte Minecraft-Bibliotheken und Assets werden bei Bedarf erneut geprüft. Vor jeder Wiederherstellung bleibt der aktuelle Stand als Rettungssicherung erhalten.</div>
+              </section>
+            }
+            @if(tab() === 'settings') {
+              <div class="section-heading"><div><h2>Instanz-Einstellungen</h2><p>Ein eigenes Zuhause für jedes Projekt.</p></div></div><form class="settings-form" (ngSubmit)="saveName()"><label>Instanzname<input name="rename" [(ngModel)]="rename" maxlength="100" required></label><div class="setting-summary"><span>Minecraft</span><strong>{{ instance.mcVersion }}</strong></div><div class="setting-summary"><span>Modloader</span><strong>{{ loaderLabel(instance.loader) }} {{ instance.loaderVersion ?? '' }}</strong></div><button class="button primary" type="submit">Änderung speichern</button></form><div class="inline-note bottom-note"><i aria-hidden="true" class="ph ph-desktop"></i>Java, RAM und Vollbild sind Geräteeinstellungen.<button class="text-button" (click)="navigate('settings')">Gerät konfigurieren<i aria-hidden="true" class="ph ph-arrow-right"></i></button></div>
+            }
+          </div>
+        } @else { <section class="empty-page"><h1>Noch keine Instanz</h1><button class="button primary" (click)="openCreate()">Instanz anlegen</button></section> }
+      }
+
+      @if(page() === 'discover') {
+        <section class="page-content discover-page">
+          <div class="section-heading"><div><h1>Entdecken</h1><p>Stöbere im Katalog und wähle Inhalte für deine Instanzen.</p></div>
+            @if(s.selected()) { <div class="discovery-target"><span>HINZUFÜGEN ZU</span><sync-select class="discovery-instance-select" label="Zielinstanz auswählen" appearance="instance" [options]="instanceOptions()" [ngModel]="s.selectedId()" (ngModelChange)="select($event)"/></div> }
+          </div>
+          <ng-container [ngTemplateOutlet]="catalog"/>
+        </section>
+      }
+
+      @if(page() === 'sync') {
+        <section class="page-content sync-page"><div class="section-heading"><div><h1>Deine Geräte</h1><p>Ein Setup. Überall zu Hause.</p></div><button class="button glass" (click)="dialog.set('connect')"><i aria-hidden="true" class="ph ph-plus"></i>Gerät verbinden</button></div>
+          @if(s.workspaceRecoveryText() !== null) { <div class="maintenance-card recovery-card" role="alert"><p>Der zuvor gespeicherte Workspace konnte nicht gelesen werden. Die Rohdaten bleiben geschützt. Exportiere sie zur Wiederherstellung, bevor du einen neuen Profilstand speicherst.</p><button class="button glass" [disabled]="exportBusy()" (click)="downloadWorkspaceRecovery()">Wiederherstellungsdaten exportieren<i aria-hidden="true" class="ph ph-download-simple"></i></button></div> }
+          <div class="connection-banner"><i aria-hidden="true" class="ph ph-cloud"></i><div><strong>Dein Setup ist auf diesem Gerät gespeichert.</strong><p>Verbinde später Dropbox, um es automatisch auf deinen anderen Rechnern zu übernehmen.</p></div><span class="badge neutral">Noch nicht verbunden</span></div>
+          <div class="device-list"><div class="device-row"><i aria-hidden="true" class="ph ph-desktop device-glyph"></i><div><strong>{{ s.device().deviceName }}</strong><small>{{ osLabel() }} · Dieses Gerät</small></div><span class="device-status"><span class="status-dot"></span>Lokal gespeichert</span></div>
+          @if(showExamples()) { @for(device of [{name:'Gaming-PC',os:'Windows',icon:'desktop',status:'2 Änderungen warten',waiting:true},{name:'MacBook Pro',os:'macOS',icon:'laptop',status:'Aktuell',waiting:false},{name:'Windows-Laptop',os:'Windows',icon:'laptop',status:'Offline',waiting:false}]; track device.name) { <div class="device-row example-device"><i aria-hidden="true" class="ph ph-{{ device.icon }} device-glyph"></i><div><strong>{{ device.name }} <span class="example-label">Beispiel</span></strong><small>{{ device.os }}</small></div><span class="device-status" [class.waiting]="device.waiting"><i aria-hidden="true" class="ph" [class.ph-clock]="device.waiting" [class.ph-check-circle]="!device.waiting"></i>{{ device.status }}</span></div> } }
+          </div><button class="text-button examples-toggle" (click)="showExamples.set(!showExamples())"><i aria-hidden="true" class="ph" [class.ph-eye]="!showExamples()" [class.ph-eye-slash]="showExamples()"></i>{{ showExamples() ? 'Beispielgeräte ausblenden' : 'Vorschau mit mehreren Geräten anzeigen' }}</button>
+          <div class="sync-settings"><section><h2>Sync-Speicher</h2><div class="provider-row"><span class="provider-icon"><i aria-hidden="true" class="ph ph-cloud"></i></span><div><strong>Dropbox</strong><small>Noch nicht eingerichtet</small></div></div><button class="button glass" (click)="dialog.set('connect')">Dropbox einrichten<i aria-hidden="true" class="ph ph-arrow-up-right"></i></button></section><section><h2>Was zusammengehört</h2><ul class="scope-list"><li><i aria-hidden="true" class="ph ph-check-circle"></i>Mods und genaue Versionen</li><li><i aria-hidden="true" class="ph ph-check-circle"></i>Spiel- und Mod-Einstellungen</li><li><i aria-hidden="true" class="ph ph-check-circle"></i>Server und Ressourcen</li></ul><p class="muted caption">Geplanter Syncumfang. RAM, Auflösung und Grafikprofil bleiben pro Gerät einstellbar.</p></section></div>
+          <div class="manifest-panel"><div><i aria-hidden="true" class="ph ph-arrows-left-right"></i><span><strong>Profile als Datei abgleichen</strong><small>Vergleiche Instanzen, genaue Versionspins und Serverfavoriten. Nur lokal vorhandene Instanzen bleiben erhalten.</small></span></div><button class="button subtle" [disabled]="operationBusy() || game().running" (click)="importFile.click()"><i aria-hidden="true" class="ph ph-upload-simple"></i>Datei vergleichen</button><button class="button glass" [disabled]="exportBusy()" (click)="downloadManifest()"><i aria-hidden="true" class="ph ph-download-simple"></i>Profile exportieren</button></div>
+          <ng-container [ngTemplateOutlet]="exportFeedback"/>
+          <section class="maintenance-card profile-backups" aria-labelledby="profile-backups-title"><div class="maintenance-heading"><div><h2 id="profile-backups-title">Lokale Profilsicherungen</h2><p>Versionspins und Favoriten sichern. Spielordner und Welten findest du bei den Sicherungen der jeweiligen Instanz.</p></div><button class="button glass" [disabled]="operationBusy() || game().running" (click)="createProfileBackup()">Profile sichern<i aria-hidden="true" class="ph ph-floppy-disk"></i></button></div>
+            @if(profileBackupError()) { <p class="form-error" role="alert">{{ profileBackupError() }}</p> }
+            @if(profileBackupNotice()) { <p class="success-note" role="status">{{ profileBackupNotice() }}</p> }
+            @for(backup of s.profileBackups(); track backup.id) { <div class="profile-backup-row"><div><strong>{{ backup.createdAt | date:'dd.MM.yyyy · HH:mm:ss' }}</strong><small>{{ backup.reason }} · {{ backup.instanceCount }} Instanzprofile</small></div><div class="maintenance-actions"><button class="button glass" [attr.aria-label]="'Profilsicherung ' + (backup.createdAt | date:'dd.MM.yyyy HH:mm:ss') + ' exportieren'" [disabled]="exportBusy()" (click)="downloadProfileBackup(backup)">Exportieren</button><button class="button glass" [attr.aria-label]="'Profilsicherung ' + (backup.createdAt | date:'dd.MM.yyyy HH:mm:ss') + ' wiederherstellen'" [disabled]="operationBusy() || game().running" (click)="restoreProfileBackup(backup)">Wiederherstellen</button><button class="icon-button quiet" [attr.aria-label]="'Profilsicherung ' + (backup.createdAt | date:'dd.MM.yyyy HH:mm:ss') + ' löschen'" [disabled]="operationBusy() || game().running" (click)="removeProfileBackup(backup)"><i aria-hidden="true" class="ph ph-trash"></i></button></div></div> } @empty { <p class="caption muted">Noch keine Profilsicherung. Vor einer Übernahme oder Wiederherstellung wird automatisch ein Stand angelegt.</p> }
+            <p class="caption muted">Dies ist ein manueller Dateiabgleich. Dropbox ist nicht verbunden; Zugangsdaten und Geräteeinstellungen werden nicht übertragen.</p>
+          </section>
+        </section>
+      }
+
+      @if(page() === 'settings') {
+        <section class="page-content settings-page">
+          <div class="section-heading"><div><h1>Einstellungen</h1><p>So, wie es zu deinem Rechner passt.</p></div><span class="badge neutral"><i aria-hidden="true" class="ph ph-desktop"></i>Nur dieses Gerät</span></div>
+          <div class="settings-section"><h2>Geräteprofil</h2>
+            <label class="setting-row"><span><strong>Gerätename</strong><small>Damit du deine Computer wiedererkennst.</small></span><input aria-label="Gerätename" [ngModel]="s.device().deviceName" (change)="s.updateDevice({deviceName: $any($event.target).value || 'Dieser Computer'})" maxlength="80"></label>
+            <label class="setting-row memory-setting"><span><strong>Arbeitsspeicher</strong><small>Maximaler Arbeitsspeicher für Minecraft.</small></span><div><output>{{ s.device().memoryMb / 1024 }} GB</output><input type="range" aria-label="Arbeitsspeicher in MB" min="1024" max="16384" step="1024" [ngModel]="s.device().memoryMb" (ngModelChange)="s.updateDevice({memoryMb: +$event})"></div></label>
+            <div class="setting-row"><span><strong>Im Vollbild starten</strong><small>Diese Einstellung bleibt auf diesem Computer.</small></span><button class="toggle" role="switch" aria-label="Im Vollbild starten" [attr.aria-checked]="s.device().fullscreen" [class.on]="s.device().fullscreen" (click)="s.updateDevice({fullscreen: !s.device().fullscreen})"><span></span></button></div>
+          </div>
+          <div class="settings-section"><h2>Java</h2>
+            <label class="setting-row java-setting"><span><strong>Java-Datei</strong><small>Leer lassen, um eine passende installierte Java-Version zu suchen.</small></span><input aria-label="Pfad zur Java-Datei" placeholder="Automatisch suchen" [disabled]="operationBusy() || game().running" [ngModel]="s.device().javaPath" (change)="saveJavaPath($any($event.target).value)" maxlength="2048" spellcheck="false"></label>
+            <div class="runtime-summary"><span>{{ runtime()?.javaVersion ?? 'Noch kein Java erkannt' }}</span><button class="button glass" [disabled]="!native || javaChecking() || operationBusy()" (click)="refreshRuntime(selectedJavaMajor() ?? undefined)">{{ javaChecking() ? 'Prüfen …' : 'Java prüfen' }}<i aria-hidden="true" class="ph ph-arrows-clockwise"></i></button></div>
+            @if(runtime()?.javaPath) { <p class="caption muted path-value">{{ runtime()?.javaPath }} · {{ runtime()?.javaArch }}</p> }
+            @if(javaError()) { <p class="form-error" role="alert">{{ javaError() }}</p> }
+            <div class="java-auto-actions"><button class="button glass" [disabled]="!native || !selectedJavaMajor() || operationBusy() || javaChecking() || game().running" (click)="installJava(selectedJavaMajor())">{{ selectedJavaMajor() ? 'Java ' + selectedJavaMajor() + ' automatisch einrichten' : 'Java automatisch einrichten' }}<i aria-hidden="true" class="ph ph-download-simple"></i></button>@if(s.device().javaPath) { <button class="text-button" [disabled]="operationBusy() || game().running" (click)="useAutomaticJava()">Automatische Java-Auswahl verwenden</button> }</div>
+            @if(javaRequirementLoading()) { <p class="caption muted">Benötigte Java-Version prüfen …</p> }
+            @else if(!selectedJavaMajor()) { <p class="caption muted">Installiere zuerst die Spieldateien deiner ausgewählten Instanz, damit SyncMC ihre genaue Java-Anforderung kennt.</p> }
+            @if(javaInstalling()) { <ng-container [ngTemplateOutlet]="javaDownloadProgress"/> }
+            @if(javaSetupNotice()) { <p class="success-note" role="status">{{ javaSetupNotice() }}</p> }
+            <p class="caption muted">Die automatische Einrichtung lädt eine passende Java-Version für dieses Gerät. Ein manuell gewählter Pfad bleibt aktiv, bis du bewusst zur Automatik wechselst.</p>
+          </div>
+          <div class="settings-section curseforge-settings"><h2>CurseForge</h2>
+            <div class="setting-row"><span><strong>Zusätzliche Inhaltsquelle</strong><small>{{ !native ? 'In der Desktop-App verfügbar' : curseforgeChecking() ? 'Lokale Einrichtung prüfen …' : curseforgeConfigured() ? 'API-Schlüssel auf diesem Gerät hinterlegt' : 'Nicht eingerichtet · kein API-Schlüssel' }}</small></span><button class="button glass" [disabled]="!native || curseforgeChecking() || operationBusy()" (click)="refreshCurseForgeStatus()">Status prüfen<i aria-hidden="true" class="ph ph-arrows-clockwise"></i></button></div>
+            <p class="caption muted">CurseForge kann mit einem eigenen, ausdrücklich für SyncMC freigegebenen API-Schlüssel eingerichtet werden. Verwende keine Schlüssel anderer Anwendungen. Modrinth bleibt unabhängig davon verfügbar.</p>
+            <label class="account-client-id curseforge-key-field">CurseForge API-Schlüssel<input type="password" aria-label="CurseForge API-Schlüssel" autocomplete="off" spellcheck="false" placeholder="Eigenen freigegebenen Schlüssel eingeben" [disabled]="!native || operationBusy()" [(ngModel)]="curseforgeKey" (keydown.enter)="saveCurseForgeKey()"></label>
+            <div class="java-auto-actions"><button class="button glass" [disabled]="!native || !curseforgeKey.trim() || operationBusy()" (click)="saveCurseForgeKey()">{{ curseforgeSaving() ? 'Schlüssel prüfen …' : 'Schlüssel prüfen & speichern' }}<i aria-hidden="true" class="ph ph-lock-key"></i></button>@if(curseforgeConfigured()) { <button class="text-button" [disabled]="operationBusy()" (click)="clearCurseForgeKey()">Gespeicherten Schlüssel entfernen</button> }<button class="text-button" [disabled]="!native" (click)="openCurseForgeApplication()">Informationen zum API-Zugang<i aria-hidden="true" class="ph ph-arrow-up-right"></i></button></div>
+            @if(curseforgeError()) { <p class="form-error" role="alert">{{ curseforgeError() }}</p> }
+            @if(curseforgeNotice()) { <p class="success-note" role="status">{{ curseforgeNotice() }}</p> }
+            <p class="caption muted">Der Schlüssel wird nativ geprüft und im Schlüsselbund gespeichert. Das Eingabefeld wird danach geleert. Der Schlüssel gehört weder in deine Profile noch in Exporte.</p>
+          </div>
+          <div class="settings-section"><h2>Konten & Verbindungen</h2>
+            <div class="setting-row"><span><strong>Minecraft-Konto</strong><small>{{ accountLoading() ? 'Konto prüfen …' : account() ? account()!.name + ' · verbunden' : 'Noch nicht verbunden' }}</small></span><button class="button glass" (click)="openAccount()">{{ account() ? 'Verwalten' : 'Anmelden' }}<i aria-hidden="true" class="ph ph-arrow-up-right"></i></button></div>
+            <div class="setting-row"><span><strong>Dropbox</strong><small>Noch nicht verbunden</small></span><button class="button glass" (click)="dialog.set('connect')">Einrichten<i aria-hidden="true" class="ph ph-arrow-up-right"></i></button></div>
+          </div>
+          <div class="about"><img src="/assets/mark-small.png" alt=""><div><strong>SyncMC <span>0.1.0</span></strong><p>Angular · Tauri · Ein eigenes Zuhause für dein Minecraft.</p></div><span class="badge neutral">Fabric & Vanilla</span></div>
+        </section>
+      }
+    </main>
+  </div>
+</div>
+
+<ng-template #exportFeedback>
+  @if(exportBusy()) { <p class="maintenance-status" role="status"><span class="spinner"></span>Datei exportieren …</p> }
+  @if(exportError()) { <p class="form-error" role="alert">{{ exportError() }}</p> }
+  @if(lastExportPath()) { <div class="export-feedback" role="status"><span>Datei gespeichert:</span><code>{{ lastExportPath() }}</code>@if(native) { <button class="text-button" (click)="openExportFolder()">Exportordner öffnen<i aria-hidden="true" class="ph ph-folder-open"></i></button> }</div> }
+</ng-template>
+
+<ng-template #javaDownloadProgress>
+  <div class="installation-progress java-download" role="status" aria-live="polite"><span>{{ javaStage() }}<strong>{{ javaProgressPercent() === null ? '' : javaProgressPercent() + ' %' }}</strong></span>@if(javaProgress()?.stage === 'downloading' && javaProgress()?.totalBytes) { <progress [value]="javaProgress()?.downloadedBytes ?? 0" [max]="javaProgress()?.totalBytes || 1" aria-label="Java herunterladen"></progress><small>{{ formatBytes(javaProgress()?.downloadedBytes ?? 0) }} / {{ formatBytes(javaProgress()?.totalBytes ?? 0) }}</small> } @else { <progress aria-label="Java einrichten"></progress> }</div>
+</ng-template>
+
+<ng-template #catalog>
+  <div class="catalog-content" [class.in-instance]="page() === 'instances'">
+    @if(s.selected()) {
+          <div class="discovery-search"><label class="search-input"><i aria-hidden="true" class="ph ph-magnifying-glass"></i><input id="catalog-search" [attr.aria-label]="sourceLabel() + ' durchsuchen'" placeholder="Mods, Shader und mehr entdecken …" [(ngModel)]="searchQuery" (ngModelChange)="queueSearch()" (keydown.enter)="search()">@if(searchQuery) { <button class="icon-button" aria-label="Suche leeren" (click)="searchQuery=''; search()"><i aria-hidden="true" class="ph ph-x"></i></button> }</label><sync-select class="content-source-select" label="Inhaltsquelle" appearance="compact" [options]="sourceOptions" [ngModel]="contentSource()" (ngModelChange)="setContentSource($event)"/></div>
+          <div class="discovery-filters"><div class="segments">@for(k of kinds; track k.id) { <button [class.active]="kind() === k.id" (click)="setKind(k.id)">{{ k.label }}</button> }</div>@if(s.selected(); as instance) { <span class="compatibility"><i aria-hidden="true" class="ph ph-funnel-simple"></i>{{ instance.mcVersion }} · {{ loaderLabel(instance.loader) }}</span> }</div>
+          @if(contentSource() !== 'modrinth' && !curseforgeUnavailable() && kind() === 'shader') { <div class="inline-note"><i aria-hidden="true" class="ph ph-info"></i>Die CurseForge-Kategorie bestätigt keine bestimmte Shader-Engine. Prüfe die Projektangaben auf die benötigte Engine.</div> }
+          @if(kind() === 'datapack') { <div class="inline-note"><i aria-hidden="true" class="ph ph-info"></i>Data Packs wirken auf die jeweilige Welt oder den Server. Auf fremden Servern kannst du sie nicht über deinen Client installieren.</div> }
+          @if(catalogUnavailable()) { <div class="catalog-source-note inline-note"><i aria-hidden="true" class="ph ph-info"></i><span>{{ catalogUnavailable() }}</span>@if(contentSource() === 'curseforge' && native && !curseforgeConfigured() && !curseforgeChecking()) { <button class="button glass" (click)="navigate('settings')">CurseForge einrichten<i aria-hidden="true" class="ph ph-arrow-right"></i></button> }</div> }
+          @if(catalogSourceNote()) { <div class="catalog-source-note inline-note" role="status"><i aria-hidden="true" class="ph ph-info"></i><span>{{ catalogSourceNote() }}</span>@if(native && !curseforgeConfigured() && !curseforgeChecking()) { <button class="button glass" (click)="navigate('settings')">CurseForge einrichten<i aria-hidden="true" class="ph ph-arrow-right"></i></button> }</div> }
+          @if(searchWarning()) { <div class="catalog-source-note inline-note" role="status"><i aria-hidden="true" class="ph ph-warning"></i><span>{{ searchWarning() }}</span><button class="text-button" (click)="search()">Erneut versuchen</button></div> }
+          @if(!catalogUnavailable()) {
+          @if(loading() && !results().length) { <div class="loading-state" role="status"><span class="spinner"></span>Passende Inhalte werden geladen …</div> }
+          @else if(searchError()) { <div class="empty-state error-state" role="alert"><i aria-hidden="true" class="ph ph-cloud-slash"></i><h3>Suche nicht verfügbar.</h3><p>{{ searchError() }}</p><button class="button glass" (click)="search()"><i aria-hidden="true" class="ph ph-arrow-clockwise"></i>Erneut versuchen</button></div> }
+          @else {
+            <div class="search-results">
+              @for(row of catalogRows(); track row.key) {
+                @let hit = row.hit;
+                <article class="search-result" [attr.data-source]="hit.source">
+                  @if(hit.icon_url) { <img class="project-icon" [src]="hit.icon_url" alt="" loading="lazy"> }
+                  @else { <span class="mod-icon"><i aria-hidden="true" class="ph ph-cube"></i></span> }
+                  <div class="result-body">
+                    <button class="result-copy" (click)="chooseCatalogVersion(row.key)">
+                      <div class="result-title"><h3>{{ hit.title }}</h3>@if(row.hits.length === 1) { <span class="provider-badge" [class.curseforge]="hit.source === 'curseforge'"><i aria-hidden="true" class="ph" [class.ph-cube]="hit.source === 'curseforge'" [class.ph-circles-three]="hit.source === 'modrinth'"></i>{{ providerLabel(hit.source) }}</span> }</div>
+                      <p>{{ hit.description }}</p><span>von {{ hit.author }} <span>·</span> {{ formatDownloads(hit.downloads) }} Downloads</span>
+                    </button>
+                    @if(row.hits.length > 1) {
+                      <div class="provider-choices" role="group" [attr.aria-label]="'Quelle für ' + hit.title">
+                        <span class="provider-choice-label">Quelle wählen</span>
+                        @for(candidate of row.hits; track candidate.source + ':' + candidate.project_id) {
+                          <button class="provider-badge provider-choice" [class.curseforge]="candidate.source === 'curseforge'" [attr.aria-pressed]="candidate.source === hit.source" [attr.aria-label]="hit.title + ' über ' + providerLabel(candidate.source) + ' auswählen'" (click)="selectCatalogProvider(row.key, candidate)"><i aria-hidden="true" class="ph" [class.ph-cube]="candidate.source === 'curseforge'" [class.ph-circles-three]="candidate.source === 'modrinth'"></i>{{ providerLabel(candidate.source) }}@if(hasProject(candidate.project_id, candidate.source)) { <span class="provider-pinned"><i aria-hidden="true" class="ph ph-check"></i>Im Profil</span> }</button>
+                        }
+                      </div>
+                    }
+                  </div>
+                  <button class="button" [disabled]="selectedLocked()" [class.primary]="!hasProject(hit.project_id, hit.source)" [class.glass]="hasProject(hit.project_id, hit.source)" (click)="chooseCatalogVersion(row.key)"><i aria-hidden="true" class="ph" [class.ph-check]="hasProject(hit.project_id, hit.source)" [class.ph-plus]="!hasProject(hit.project_id, hit.source)"></i>{{ hasProject(hit.project_id, hit.source) ? 'Vorgemerkt' : 'Hinzufügen' }}</button>
+                </article>
+              } @empty {
+                <div class="empty-state"><i aria-hidden="true" class="ph ph-magnifying-glass"></i><h3>Hier ist noch Platz für Neues.</h3><p>{{ s.selected()?.loader === 'vanilla' && kind() === 'mod' ? 'Vanilla unterstützt keine Mods. Wähle eine Instanz mit Modloader oder entdecke Resource Packs.' : 'Keine passenden Inhalte gefunden. Versuche einen anderen Suchbegriff.' }}</p></div>
+              }
+            </div>
+          }
+          }
+          @if(loading() && results().length) { <div class="catalog-progress" role="status"><span class="spinner"></span>Weitere Anbieter werden geladen …</div> }
+          <div class="inline-note bottom-note"><i aria-hidden="true" class="ph ph-info"></i>{{ catalogAttribution() }} Minecraft-Version und bei Mods der Modloader sind auf deine Instanz abgestimmt.</div>
+    } @else {
+      <div class="empty-state"><i aria-hidden="true" class="ph ph-stack"></i><h3>Wohin geht dein nächstes Abenteuer?</h3><p>Lege eine Instanz an, damit die Inhalte zu deiner Minecraft-Version passen.</p><button class="button primary" (click)="openCreate()">Instanz anlegen</button></div>
+    }
+  </div>
+</ng-template>
+
+<input #importFile type="file" accept="application/json,.json" hidden (change)="readImport($event)">
+@if(dialog()) {
+  <div class="modal-backdrop" [attr.inert]="confirmation() ? '' : null" [attr.aria-hidden]="confirmation() ? 'true' : null" (click)="close()"><section class="modal primary-modal" [class.log-modal]="dialog() === 'logs' || dialog() === 'import'" role="dialog" aria-modal="true" aria-labelledby="dialog-title" (click)="$event.stopPropagation()"><button class="icon-button modal-close" (click)="close()" aria-label="Dialog schließen"><i aria-hidden="true" class="ph ph-x"></i></button>
+    @if(dialog() === 'create') {
+      <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-stack"></i></span><h2 id="dialog-title">Ein neues Abenteuer.</h2><p>Gib deinem nächsten Projekt ein eigenes Zuhause.</p>
+      <form (ngSubmit)="create()">
+        <label>Instanzname<input name="name" [(ngModel)]="newName" placeholder="Zum Beispiel: Unser Survival-Projekt" maxlength="100" required autofocus></label>
+        <div class="form-columns">
+          <div class="select-field"><span>Hauptversion</span><sync-select label="Minecraft-Hauptversion" name="minecraftFamily" [options]="minecraftFamilyOptions()" [searchable]="true" searchPlaceholder="z. B. 26.4 oder 1.21" [placeholder]="minecraftLoading() ? 'Versionen laden …' : 'Hauptversion wählen'" [disabled]="minecraftLoading() || !minecraftCatalog()" [ngModel]="newMinecraftFamily()" (ngModelChange)="setMinecraftFamily($event)"/></div>
+          <div class="select-field"><span>Unterversion</span><sync-select label="Minecraft-Unterversion" name="minecraftVersion" [options]="minecraftOptions()" [searchable]="true" searchPlaceholder="Version suchen …" placeholder="Version auswählen" [disabled]="minecraftLoading() || !minecraftOptions().length" [ngModel]="newVersionValue()" (ngModelChange)="newVersionValue.set($event)"/></div>
+        </div>
+        <label class="snapshot-choice"><input type="checkbox" name="snapshots" [ngModel]="includeSnapshots()" (ngModelChange)="setSnapshots($event)"><span>Snapshots und Vorabversionen anzeigen</span></label>
+        <div class="select-field create-loader"><span>Modloader</span><sync-select label="Modloader" name="loader" [options]="loaderOptions" [(ngModel)]="newLoader"/></div>
+        @if(minecraftError()) { <div class="form-error" role="alert">{{ minecraftError() }} <button class="text-button" type="button" (click)="loadMinecraftVersions()">Erneut versuchen</button></div> }
+        @if(newMinecraftVersion()?.type === 'snapshot') { <div class="inline-note snapshot-note"><i aria-hidden="true" class="ph ph-flask"></i>Teste kommende Minecraft-Versionen. Passende Modloader und Inhalte sind je nach Snapshot noch nicht verfügbar.</div> }
+        <p class="caption muted">{{ newLoader === 'vanilla' ? 'Danach kannst du Minecraft für diese Instanz installieren.' : 'Danach wählst du eine Fabric-Version und installierst Minecraft mit deinen Mods.' }}</p>
+        @if(formError) { <p class="form-error" role="alert">{{ formError }}</p> }
+        <button class="button primary full" type="submit" [disabled]="minecraftLoading() || !newMinecraftVersion() || !!minecraftError()">Instanz anlegen<i aria-hidden="true" class="ph ph-arrow-right"></i></button>
+      </form>
+    }
+    @if(dialog() === 'server') { <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-hard-drives"></i></span><h2 id="dialog-title">Dein nächster Treffpunkt.</h2><p>Speichere einen Server für {{ s.selected()?.name }}.</p><form (ngSubmit)="addServer()"><label>Name<input name="serverName" [(ngModel)]="serverName" placeholder="Unser Survival-Server" required></label><label>Serveradresse<input name="serverAddress" [(ngModel)]="serverAddress" placeholder="play.example.org:25565" required></label>@if(formError) { <p class="form-error" role="alert">{{ formError }}</p> }<button class="button primary full" type="submit">Server speichern<i aria-hidden="true" class="ph ph-check"></i></button></form> }
+    @if(dialog() === 'launch') {
+      <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-game-controller"></i></span><h2 id="dialog-title">Minecraft starten.</h2><p>{{ launchInstance()?.name }} · {{ launchInstance()?.mcVersion }} · {{ loaderLabel(launchInstance()?.loader ?? '') }}</p>
+      @if(!native) { <div class="inline-note"><i aria-hidden="true" class="ph ph-desktop"></i>Öffne SyncMC als Desktop-App, um Minecraft zu installieren und zu spielen.</div> }
+      @else if(!launchSupported()) { <div class="inline-note"><i aria-hidden="true" class="ph ph-puzzle-piece"></i>Spielen ist für Fabric und Vanilla verfügbar. Forge und NeoForge werden noch nicht installiert.</div> }
+      @else {
+        @if(launchInstance()?.loader === 'fabric') {
+          <div class="select-field launch-loader"><span>Fabric-Version</span><sync-select label="Fabric-Version" [options]="fabricOptions()" [ngModel]="launchInstance()?.loaderVersion ?? ''" (ngModelChange)="setFabricVersion($event)" [disabled]="fabricLoading() || operationBusy() || game().running" [placeholder]="fabricLoading() ? 'Fabric-Versionen laden …' : 'Fabric-Version wählen'"/></div>
+          @if(fabricError()) { <p class="form-error" role="alert">{{ fabricError() }}</p> }
+        }
+        @if(installationLoading()) { <div class="loading-state" role="status"><span class="spinner"></span>Installation prüfen …</div> }
+        @if(installingInstance()?.id === launchInstance()?.id && !contentInstallingId()) {
+          <div class="installation-progress" role="status" aria-live="polite"><span>{{ installStage() }}<strong>{{ installProgressPercent() }} %</strong></span><progress [value]="installProgressPercent()" max="100" aria-label="Minecraft-Installation"></progress><small>{{ installProgress()?.completedFiles ?? 0 }} / {{ installProgress()?.totalFiles ?? 0 }} Dateien geprüft · {{ ((installProgress()?.downloadedBytes ?? 0) / 1000000).toFixed(1) }} MB geladen</small></div>
+        }
+        @if(contentInstallingId() === launchInstance()?.id) {
+          <div class="installation-progress" role="status" aria-live="polite"><span>Inhalte und Pflichtabhängigkeiten abgleichen<strong>{{ contentProgress()?.completedFiles ?? 0 }} / {{ contentProgress()?.totalFiles ?? 0 }}</strong></span><progress [value]="contentProgress()?.completedFiles ?? 0" [max]="contentProgress()?.totalFiles || 1" aria-label="Inhalte installieren"></progress></div>
+        }
+        @if(launchInstallation(); as report) {
+          <div class="version-details"><span>Minecraft<strong>{{ report.versionId }} · {{ report.loader === 'fabric' ? 'Fabric ' + report.loaderVersion : 'Vanilla' }}</strong></span><span>Geprüfte Spieldateien<strong>{{ report.filesVerified }}</strong></span><span>Spielordner<strong>{{ report.directory }}</strong></span><span>Benötigtes Java<strong>Java {{ report.javaMajorVersion }}</strong></span></div>
+        } @else if(!installationLoading()) { <p class="caption muted">Installiert die originalen Minecraft-Dateien, deinen Modloader und ausgewählte Inhalte mit Prüfsummenprüfung.</p> }
+        @if(launchHasExamples()) {
+          <div class="inline-note"><i aria-hidden="true" class="ph ph-info"></i>Diese Instanz enthält aktive Beispielinhalte. Wähle in der Inhaltsliste für jeden eine echte Version oder entferne die Beispiele.<button class="text-button" (click)="editLaunchContents()">Inhalte bearbeiten<i aria-hidden="true" class="ph ph-arrow-right"></i></button></div>
+        }
+        <button class="button glass full" [disabled]="operationBusy() || game().running || installationLoading() || fabricLoading() || (launchInstance()?.loader === 'fabric' && !launchInstance()?.loaderVersion)" (click)="installMinecraft()">{{ launchInstallation() ? 'Installation & Inhalte prüfen' : 'Minecraft & Inhalte installieren' }}<i aria-hidden="true" class="ph ph-download-simple"></i></button>
+        @if(operationBusy()) { <p class="caption muted launch-status">Du kannst diesen Dialog schließen. Die Vorbereitung läuft weiter.</p> }
+        <div class="launch-readiness">
+          <div><i aria-hidden="true" class="ph" [class.ph-check-circle]="runtime()?.javaAvailable && !javaError()" [class.ph-warning-circle]="!runtime()?.javaAvailable || !!javaError()"></i><span>{{ javaChecking() ? 'Java prüfen …' : runtime()?.javaVersion ?? 'Java noch nicht erkannt' }}</span><button class="text-button" [disabled]="javaChecking() || operationBusy()" (click)="refreshRuntime(launchInstallation()?.javaMajorVersion)">Prüfen</button></div>
+          <div><i aria-hidden="true" class="ph" [class.ph-check-circle]="!!account()" [class.ph-user-circle]="!account()"></i><span>{{ account() ? account()!.name : 'Minecraft-Konto noch nicht verbunden' }}</span><button class="text-button" [disabled]="operationBusy() || accountLoading()" (click)="openAccount()">{{ account() ? 'Verwalten' : 'Anmelden' }}</button></div>
+        </div>
+        @if(launchInstallation(); as javaReport) { <div class="java-auto-actions"><button class="button glass" [disabled]="operationBusy() || javaChecking() || game().running" (click)="installJava(javaReport.javaMajorVersion)">Java {{ javaReport.javaMajorVersion }} automatisch einrichten<i aria-hidden="true" class="ph ph-download-simple"></i></button>@if(s.device().javaPath) { <button class="text-button" [disabled]="operationBusy() || game().running" (click)="useAutomaticJava()">Automatische Java-Auswahl verwenden</button> }</div> }
+        @if(javaInstalling()) { <ng-container [ngTemplateOutlet]="javaDownloadProgress"/> }
+        @if(javaSetupNotice()) { <p class="success-note" role="status">{{ javaSetupNotice() }}</p> }
+        @if(javaError()) { <p class="form-error" role="alert">{{ javaError() }} <button class="text-button" (click)="navigate('settings')">Java einstellen</button></p> }
+        @if(!game().running) { <button class="button primary full start-game" [disabled]="!launchInstallation() || !account() || operationBusy() || installationLoading() || launchHasExamples()" (click)="startGame()">{{ gameLaunching() ? 'Minecraft wird vorbereitet …' : 'Minecraft starten' }}<i aria-hidden="true" class="ph ph-play"></i></button> }
+        @else { <button class="button primary full start-game" [disabled]="gameStopping() || gameStopRequested()" (click)="stopGame()">{{ gameStopping() || gameStopRequested() ? 'Beenden angefordert …' : 'Laufendes Spiel beenden' }}<i aria-hidden="true" class="ph ph-stop"></i></button> }
+        @if(gameStopRequested() && game().running) { <p class="caption muted launch-status">Minecraft beendet den Prozess. Du kannst deine Welt auch im Spiel speichern und verlassen.</p><button class="text-button danger-action" [disabled]="gameStopping()" (click)="stopGame(true)">Beenden erzwingen</button> }
+        <button class="text-button logs-link" (click)="openLogs()"><i aria-hidden="true" class="ph ph-terminal-window"></i>Spielprotokoll anzeigen</button>
+        @if(!game().running && game().exitCode !== undefined && game().exitCode !== null) { <p class="caption muted launch-status">Letzter Spielprozess beendet · Exit-Code {{ game().exitCode }}</p> }
+      }
+      @if(installationError()) { <p class="form-error" role="alert">{{ installationError() }}</p> }
+      @if(gameError()) { <p class="form-error" role="alert">{{ gameError() }}</p> }
+    }
+    @if(dialog() === 'mod-update') {
+      <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-arrows-clockwise"></i></span><h2 id="dialog-title">Mod-Version aktualisieren.</h2>
+      @if(updateSelection(); as update) {
+        <p>{{ update.name }} · {{ providerLabel(update.source) }} · {{ s.selected()?.name }}</p>
+        <div class="version-details"><span>Bisherige Version<strong>{{ update.currentVersion }}</strong></span><span>Neue Version<strong>{{ update.candidate?.version_number }} · Release</strong></span><span>Veröffentlicht<strong>{{ update.candidate?.date_published | date:'dd.MM.yyyy' }}</strong></span><span>Datei<strong>{{ update.file?.filename }}</strong></span><span>Minecraft / Loader<strong>{{ s.selected()?.mcVersion }} · {{ loaderLabel(s.selected()?.loader ?? '') }}</strong></span></div>
+        <p class="caption muted">Vor der Änderung eines vorhandenen Installationsstands sichert SyncMC Profil, Mods, Konfiguration und Welten. Pflichtabhängigkeiten werden erneut geprüft; andere ausdrücklich gewählte Mod-Versionen bleiben erhalten.</p>
+        @if(contentInstallingId()) { <p class="maintenance-status" role="status"><span class="spinner"></span>Inhalte sichern, herunterladen und prüfen …</p> }
+        @if(updateApplyError()) { <p class="form-error" role="alert">{{ updateApplyError() }}</p>@if(s.persistenceError()) { <button class="button glass" [disabled]="exportBusy()" (click)="downloadManifest()">Profile jetzt exportieren<i aria-hidden="true" class="ph ph-download-simple"></i></button> } }
+        <button class="button primary full" [disabled]="!native || operationBusy() || game().running" (click)="applyModUpdate()">Diese Version installieren<i aria-hidden="true" class="ph ph-download-simple"></i></button>
+      }
+    }
+    @if(dialog() === 'account') {
+      <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-user-circle"></i></span><h2 id="dialog-title">Dein Minecraft-Konto.</h2><p>Melde dich mit dem Microsoft-Konto an, das Minecraft Java besitzt.</p>
+      @if(!native) { <div class="inline-note"><i aria-hidden="true" class="ph ph-desktop"></i>Die Anmeldung und sichere Kontospeicherung stehen in der Desktop-App zur Verfügung.</div> }
+      @else if(accountLoading()) { <div class="loading-state"><span class="spinner"></span>Konto prüfen …</div> }
+      @else if(account(); as connected) {
+        <div class="connected-account"><i aria-hidden="true" class="ph ph-check-circle"></i><div><strong>{{ connected.name }}</strong><small>{{ connected.uuid }}</small></div></div>
+        <p class="caption muted">Die Anmeldung wird im Schlüsselbund dieses Geräts gespeichert. Sie ist kein Bestandteil deines Instanzexports.</p>
+        <button class="button glass full" (click)="logout()">Konto abmelden<i aria-hidden="true" class="ph ph-sign-out"></i></button>
+      } @else if(loginChallenge(); as challenge) {
+        <div class="device-login"><p>Öffne <strong>{{ challenge.verificationUri }}</strong> und gib diesen Code ein:</p><button class="login-code" (click)="copyAddress(challenge.userCode, 'Anmeldecode')" aria-label="Anmeldecode kopieren">{{ challenge.userCode }}<i aria-hidden="true" class="ph ph-copy"></i></button><p class="caption muted">Bestätige nur die Anmeldung, die du hier gestartet hast.</p><button class="button primary full" (click)="reopenLogin()">Microsoft im Browser öffnen<i aria-hidden="true" class="ph ph-arrow-up-right"></i></button><div class="login-waiting" role="status"><span class="spinner"></span>Warte auf deine Bestätigung · {{ loginSeconds() }} s</div><button class="text-button" (click)="cancelLogin()">Anmeldung abbrechen</button></div>
+      } @else {
+        <button class="button primary full" [disabled]="loginBusy()" (click)="beginLogin()">{{ loginBusy() ? 'Anmeldung vorbereiten …' : 'Mit Microsoft anmelden' }}<i aria-hidden="true" class="ph ph-arrow-up-right"></i></button>
+        <p class="caption muted launch-status">Die Anmeldung findet im Systembrowser statt. SyncMC erhält keine Passwörter.</p>
+        @if(usingDefaultMicrosoftClient()) { <p class="caption muted launch-status">Die Freigabe des Minecraft-API-Zugangs für SyncMC steht noch aus. Dadurch kann die Anmeldung beim Zugriff auf Minecraft vorerst scheitern.</p> }
+        <details class="account-setup"><summary>Erweitert: Microsoft-App-Client-ID</summary>
+          <p>SyncMC verwendet seine eigene Microsoft-App. Du brauchst dafür keine eigene App zu registrieren. Ändere die Client-ID nur, wenn du bewusst eine andere registrierte App verwenden möchtest.</p>
+          <label class="account-client-id">Microsoft-App-Client-ID<input aria-label="Microsoft-App-Client-ID" [placeholder]="defaultMicrosoftClientId" [value]="microsoftClientIdDraft" (input)="microsoftClientIdDraft = $any($event.target).value" (change)="saveClientId(microsoftClientIdDraft)" maxlength="100" spellcheck="false"></label>
+          <p>{{ usingDefaultMicrosoftClient() ? 'SyncMC-Standard ist aktiv.' : 'Eigene Microsoft-App ist auf diesem Gerät aktiv.' }} Ein leeres Feld setzt die Auswahl auf den SyncMC-Standard zurück.</p>
+          @if(!usingDefaultMicrosoftClient()) { <button class="text-button" (click)="saveClientId('')">SyncMC-Standard verwenden<i aria-hidden="true" class="ph ph-arrow-counter-clockwise"></i></button> }
+          <p>Die Client-ID ist öffentlich. Trage hier kein Client-Geheimnis und kein Microsoft-Passwort ein.</p>
+          <button class="text-button" (click)="openRegistration()">Microsoft Entra öffnen<i aria-hidden="true" class="ph ph-arrow-up-right"></i></button>
+        </details>
+      }
+      @if(accountError()) { <p class="form-error" role="alert">{{ accountError() }}</p> }
+    }
+    @if(dialog() === 'logs') {
+      <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-terminal-window"></i></span><h2 id="dialog-title">Minecraft-Spielprotokoll.</h2><p>{{ game().running ? 'Minecraft läuft · ' + runningInstanceName() : 'Letzter Spielstart' }}{{ game().exitCode !== undefined && game().exitCode !== null ? ' · Exit-Code ' + game().exitCode : '' }}</p>
+      @if(logsLoading()) { <div class="loading-state"><span class="spinner"></span>Protokoll laden …</div> }
+      <p class="caption muted">Zeigt die letzten 1.000 Meldungen dieses Spielstarts.</p>
+      <div class="game-log" tabindex="0" aria-label="Minecraft-Spielprotokoll">@for(log of gameLogs(); track $index) { <div [class.log-error]="log.stream === 'stderr'"><time>{{ log.timestamp * 1000 | date:'HH:mm:ss' }}</time><span>{{ log.line }}</span></div> } @empty { <p>Noch keine Meldungen. Starte Minecraft, um das Protokoll zu sehen.</p> }</div>
+      <div class="modal-actions"><button class="button glass" [disabled]="!gameLogs().length" (click)="copyLogs()">Protokoll kopieren<i aria-hidden="true" class="ph ph-copy"></i></button>@if(game().running) { <button class="button glass" [disabled]="gameStopping() || gameStopRequested()" (click)="stopGame()">{{ gameStopRequested() ? 'Beenden angefordert …' : 'Spiel beenden' }}<i aria-hidden="true" class="ph ph-stop"></i></button> }</div>
+      @if(gameError()) { <p class="form-error" role="alert">{{ gameError() }}</p> }
+    }
+    @if(dialog() === 'connect') { <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-cloud"></i></span><h2 id="dialog-title">Dein Setup geht mit.</h2><p>Der automatische Dropbox-Abgleich ist noch nicht angebunden. Die Verbindung wird später direkt über Dropbox autorisiert.</p><div class="dialog-checklist"><span><i aria-hidden="true" class="ph ph-desktop"></i>Windows mit Windows, Mac mit Mac oder gemischt</span><span><i aria-hidden="true" class="ph ph-lock-key"></i>Zugang nur zum SyncMC-App-Ordner</span><span><i aria-hidden="true" class="ph ph-clock-counter-clockwise"></i>Versionierte Stände mit Wiederherstellung</span></div><p class="caption muted">Bis dahin kannst du deine Instanzprofile als Datei exportieren und auf einem anderen Gerät importieren.</p><button class="button primary full" [disabled]="exportBusy()" (click)="downloadManifest()">Instanzen exportieren<i aria-hidden="true" class="ph ph-download-simple"></i></button> }
+    @if(dialog() === 'version') { <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-package"></i></span><h2 id="dialog-title">{{ versionHit()?.title }}</h2><p>Wähle die genaue Version von {{ providerLabel(versionSource()) }} für {{ s.selected()?.name }}.</p>@if(alternatePinnedSource()) { <p class="inline-note">Dieses Projekt ist bereits über {{ alternatePinnedSource() }} im Profil. Entferne den bisherigen Eintrag zuerst, wenn du die Quelle wechseln möchtest.</p> }@if(versionLoading()) { <div class="loading-state"><span class="spinner"></span>Versionen laden …</div> } @else if(versionError()) { <p class="form-error" role="alert">{{ versionError() }}</p> } @else if(versions().length) { <div class="select-field"><span>Version</span><sync-select label="Version" [options]="versionOptions()" [ngModel]="selectedVersion()" (ngModelChange)="selectedVersion.set($event)"/></div>@if(version(); as v) { <div class="version-details"><span>Minecraft<strong>{{ s.selected()?.mcVersion }}</strong></span><span>Datei<strong>{{ versionFile()?.filename ?? '' }}</strong></span><span>Benötigte Abhängigkeiten<strong>{{ requiredDependencies() }}</strong></span></div> }<div class="inline-note"><i aria-hidden="true" class="ph ph-info"></i>Speichert die ausgewählte Datei und Prüfsumme im Instanzprofil. Beim nächsten Installieren oder Spielstart werden die Datei und ihre Pflichtabhängigkeiten heruntergeladen und geprüft.</div><button class="button primary full" [disabled]="!versionHashValid() || !!alternatePinnedSource()" (click)="addVersion()">Version vormerken<i aria-hidden="true" class="ph ph-plus"></i></button> } @else { <div class="empty-state"><h3>Keine passende Version</h3><p>Für diese Minecraft-Version und diesen Loader wurde keine Datei gefunden.</p></div> } }
+    @if(dialog() === 'import') {
+      <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-arrows-left-right"></i></span><h2 id="dialog-title">Instanzprofile vergleichen.</h2>
+      @if(profileSyncPlan(); as plan) {
+        <p>{{ plan.incoming.length }} Profile aus der Datei · {{ plan.keptLocalCount }} nur lokal vorhandene Profile bleiben erhalten.</p>
+        <div class="inline-note"><i aria-hidden="true" class="ph ph-info"></i>Entscheide bei abweichenden Profilen, welchen Stand du übernehmen möchtest. Vor der Übernahme wird der aktuelle Profilstand lokal gesichert. Geräteeinstellungen und Spielordner bleiben auf diesem Gerät.</div>
+        <div class="profile-sync-list">
+          @for(entry of plan.entries; track entry.id) {
+            <article class="profile-sync-entry"><div class="backup-card-heading"><h3>{{ entry.name }}</h3><span class="badge neutral">{{ entry.kind === 'added' ? 'Neue Instanz' : entry.kind === 'identical' ? 'Bereits identisch' : 'Entscheidung nötig' }}</span></div>
+              @if(entry.kind === 'conflict') {
+                <p class="caption muted">Unterschiede: {{ entry.changes.join(' · ') }}</p>
+                <div class="profile-sync-choices">
+                  <label [class.selected]="profileSyncChoices()[entry.id] === 'local'"><input type="radio" [name]="'profile-' + entry.id" [attr.aria-label]="'Lokales Profil ' + entry.name + ' behalten'" [checked]="profileSyncChoices()[entry.id] === 'local'" (change)="chooseProfileSync(entry.id, 'local')"><span><strong>Lokal behalten</strong><small>{{ entry.local?.name }} · {{ entry.local?.mcVersion }} · {{ loaderLabel(entry.local?.loader ?? '') }} {{ entry.local?.loaderVersion ?? '' }}</small><small>{{ entry.local?.servers?.length ?? 0 }} Serverfavoriten</small></span></label>
+                  <label [class.selected]="profileSyncChoices()[entry.id] === 'incoming'"><input type="radio" [name]="'profile-' + entry.id" [attr.aria-label]="'Importiertes Profil ' + entry.name + ' übernehmen'" [checked]="profileSyncChoices()[entry.id] === 'incoming'" (change)="chooseProfileSync(entry.id, 'incoming')"><span><strong>Aus Datei übernehmen</strong><small>{{ entry.incoming.name }} · {{ entry.incoming.mcVersion }} · {{ loaderLabel(entry.incoming.loader) }} {{ entry.incoming.loaderVersion ?? '' }}</small><small>{{ entry.incoming.servers.length }} Serverfavoriten</small></span></label>
+                </div>
+                <div class="profile-sync-details"><details><summary>Lokal: {{ entry.local?.contents?.length ?? 0 }} genaue Inhaltspins</summary><ul>@for(content of entry.local?.contents ?? []; track content.id) { <li>{{ content.name }} · {{ content.version }}{{ content.enabled ? '' : ' · deaktiviert' }}</li> }</ul></details><details><summary>Datei: {{ entry.incoming.contents.length }} genaue Inhaltspins</summary><ul>@for(content of entry.incoming.contents; track content.id) { <li>{{ content.name }} · {{ content.version }}{{ content.enabled ? '' : ' · deaktiviert' }}</li> }</ul></details></div>
+              } @else { <p class="caption muted">{{ entry.incoming.mcVersion }} · {{ loaderLabel(entry.incoming.loader) }} {{ entry.incoming.loaderVersion ?? '' }} · {{ entry.incoming.contents.length }} Inhalte</p> }
+            </article>
+          }
+        </div>
+        @if(profileSyncError()) { <p class="form-error" role="alert">{{ profileSyncError() }}</p> }
+        <div class="modal-actions"><button class="button glass" [disabled]="profileSyncApplying()" (click)="close()">Abbrechen</button><button class="button primary" [disabled]="!profileSyncResolved() || operationBusy() || game().running" (click)="confirmImport()">Profilabgleich übernehmen<i aria-hidden="true" class="ph ph-check"></i></button></div>
+      }
+    }
+
+    @if((dialog() === 'connect' || dialog() === 'mod-update' || dialog() === 'import') && (lastExportPath() || exportError() || exportBusy())) { <ng-container [ngTemplateOutlet]="exportFeedback"/> }
+
+  </section></div>
+}
+@if(confirmation(); as request) {
+  <div class="modal-backdrop confirmation-backdrop" (click)="resolveConfirmation(false)">
+    <section class="modal confirmation-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirmation-title" aria-describedby="confirmation-message" tabindex="-1" (click)="$event.stopPropagation()">
+      <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-warning-circle"></i></span>
+      <h2 id="confirmation-title">{{ request.title }}</h2><p id="confirmation-message" class="confirmation-message">{{ request.message }}</p>
+      <div class="modal-actions"><button class="button glass confirmation-cancel" (click)="resolveConfirmation(false)">Abbrechen</button><button class="button primary confirmation-action" [class.destructive]="request.destructive" (click)="resolveConfirmation(true)">{{ request.actionLabel }}</button></div>
+    </section>
+  </div>
+}
+@if(toast()) { <div class="toast" [attr.inert]="confirmation() ? '' : null" role="status"><i aria-hidden="true" class="ph ph-check-circle"></i><span>{{ toast() }}</span><button class="icon-button" (click)="toast.set('')" aria-label="Hinweis schließen"><i aria-hidden="true" class="ph ph-x"></i></button></div> }

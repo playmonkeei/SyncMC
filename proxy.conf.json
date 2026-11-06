@@ -1,0 +1,17 @@
+{
+  "/api/minecraft/**": {
+    "target": "https://piston-meta.mojang.com",
+    "secure": true,
+    "changeOrigin": true,
+    "rewrite": { "^/api/minecraft": "/mc/game" },
+    "pathRewrite": { "^/api/minecraft": "/mc/game" }
+  },
+  "/api/modrinth/**": {
+    "target": "https://api.modrinth.com",
+    "secure": true,
+    "changeOrigin": true,
+    "rewrite": { "^/api/modrinth": "/v2" },
+    "pathRewrite": { "^/api/modrinth": "/v2" },
+    "headers": { "User-Agent": "SyncMC/0.1.0 (local desktop prototype)" }
+  }
+}

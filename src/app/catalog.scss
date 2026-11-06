@@ -1,0 +1,50 @@
+/* The same catalog can be opened globally or inside an instance. */
+.browsing-instance .instance-banner { height:176px; }
+.browsing-instance .banner-content { bottom:18px; }
+.inline-catalog-heading { display:flex; align-items:center; justify-content:space-between; gap:24px; margin:0 0 26px; }
+.inline-catalog-heading h2 { margin-top:17px; font-size:27px; }
+.catalog-back { display:inline-flex; align-items:center; gap:8px; padding:0; color:#cbd8bc; font-size:13px; }
+.catalog-back:hover { color:#fff; }
+.catalog-back>i { font-size:19px; }
+.catalog-count { margin-left:6px; min-width:22px; padding:3px 7px; border:1px solid #caddab28; border-radius:6px; color:#b9cda3; font-size:11px; }
+.catalog-target { display:flex; align-items:center; gap:12px; padding:12px 16px; border:1px solid #d7e4be24; border-radius:10px; background:linear-gradient(130deg,#e1efd309,#e1efd302); }
+.catalog-target>i { font-size:25px; color:#c4d8a8; }
+.catalog-target strong { display:block; font-size:14px; font-weight:500; }
+.catalog-target small { display:block; margin-top:6px; font-size:11px; color:#acbaa0; }
+.catalog-target .target-label { color:#acbaa0; font-size:10px; margin-bottom:5px; }
+.catalog-content.in-instance .discovery-search { margin-bottom:21px; }
+.catalog-content.in-instance .discovery-filters { padding-bottom:20px; }
+.catalog-content.in-instance .search-result { padding-block:21px; }
+.catalog-content.in-instance .result-copy p { -webkit-line-clamp:1; }
+.discovery-target { width:330px; max-width:45%; flex-shrink:0; }
+.discovery-target>span { display:block; margin-bottom:9px; color:#b8c4ad; font-size:11px; }
+.discovery-target .discovery-instance-select { width:100%; max-width:none; }
+.catalog-content .bottom-note { margin-top:28px; }
+.result-title { display:flex; align-items:center; flex-wrap:wrap; gap:9px 12px; }
+.result-body { flex:1; min-width:0; }
+.result-body .result-copy { display:block; width:100%; }
+.provider-choices { display:flex; align-items:center; flex-wrap:wrap; gap:7px; margin-top:12px; }
+.provider-choice-label { color:#909c83; margin-right:3px; font-size:10px; }
+.provider-choice { min-height:30px; padding:6px 9px; opacity:.65; }
+.provider-choice[aria-pressed='true'] { opacity:1; border-color:#b8d6a7; background:#9fc88520; }
+.provider-choice.curseforge[aria-pressed='true'] { border-color:#edbba0; background:#d8885e20; }
+.provider-choice:focus-visible { outline:2px solid #d2e2bb; outline-offset:3px; }
+.provider-pinned { display:inline-flex; align-items:center; gap:3px; padding-left:6px; border-left:1px solid currentColor; font-size:9px; }
+.provider-badge { display:inline-flex; align-items:center; gap:5px; flex-shrink:0; padding:4px 7px; border:1px solid #a4cf9638; border-radius:6px; color:#b8d6a7; background:#9fc8850b; font-size:10px; line-height:1.2; }
+.provider-badge>i { font-size:13px; }
+.provider-badge.curseforge { color:#edbba0; border-color:#db946c40; background:#d8885e0c; }
+.catalog-source-note { flex-wrap:wrap; }
+.catalog-source-note>span { flex:1; min-width:180px; }
+.catalog-source-note>.button,.catalog-source-note>.text-button { flex-shrink:0; }
+.catalog-progress { display:flex; align-items:center; gap:10px; padding-top:20px; color:#b7c3a8; font-size:12px; }
+.catalog-progress .spinner { width:17px; height:17px; }
+@media(max-width:1250px) { .discovery-target { width:295px; } .inline-catalog-heading { gap:18px; } .inline-catalog-heading h2 { font-size:25px; } }
+@media(max-width:760px) {
+  .result-body { flex-basis:calc(100% - 65px); }
+  .inline-catalog-heading { flex-wrap:wrap; gap:18px; margin-bottom:22px; }
+  .inline-catalog-heading h2 { font-size:24px; margin-top:14px; }
+  .catalog-target { width:100%; padding:10px 12px; }
+  .catalog-target strong { font-size:13px; }
+  .discovery-target { width:100%; max-width:none; }
+  .catalog-content.in-instance .result-copy p { -webkit-line-clamp:2; }
+}

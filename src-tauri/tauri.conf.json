@@ -1,0 +1,33 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "SyncMC",
+  "version": "0.1.0",
+  "identifier": "dev.syncmc.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://127.0.0.1:4200",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist/syncmc/browser"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "SyncMC",
+        "width": 1440,
+        "height": 1024,
+        "minWidth": 1000,
+        "minHeight": 700,
+        "theme": "Dark",
+        "backgroundColor": "#131912"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src ipc: http://ipc.localhost https://api.modrinth.com; font-src 'self' data:",
+      "devCsp": "default-src 'self'; img-src 'self' asset: http://asset.localhost data: https:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src ipc: http://ipc.localhost http://localhost:4200 ws://localhost:4200 http://127.0.0.1:4200 ws://127.0.0.1:4200 https://api.modrinth.com; font-src 'self' data:"
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}

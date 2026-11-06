@@ -1,0 +1,61 @@
+# Dependencies and generated output
+node_modules/
+dist/
+.angular/
+out-tsc/
+src-tauri/target/
+src-tauri/gen/
+coverage/
+playwright-report/
+test-results/
+*.log
+*.tsbuildinfo
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+.npmrc
+.netrc
+.git-credentials
+.aws/
+.azure/
+.ssh/
+.gnupg/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+credentials.json
+secrets.json
+*.secret
+*.local
+*.local.*
+
+# Private development notes, QA sessions and generated design explorations
+.agents/
+.codex/
+AGENTS.md
+docs/qa/
+docs/design/
+design-qa.md
+docs/private/
+private/
+.private/
+
+# Local game data and profile exports
+minecraft/
+backups/
+exports/
+*.syncmc.json
+
+# Editor and OS metadata
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp
+*.swo

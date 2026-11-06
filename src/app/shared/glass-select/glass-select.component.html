@@ -1,0 +1,87 @@
+<button
+  #trigger
+  class="select-trigger"
+  type="button"
+  [attr.role]="searchable ? null : 'combobox'"
+  aria-haspopup="listbox"
+  [class.appearance-field]="appearance === 'field'"
+  [class.appearance-compact]="appearance === 'compact'"
+  [class.appearance-instance]="appearance === 'instance'"
+  [class.is-open]="open()"
+  [class.is-placeholder]="!selectedOption"
+  [disabled]="disabled()"
+  [attr.aria-label]="label"
+  [attr.aria-expanded]="open()"
+  [attr.aria-controls]="listboxId"
+  [attr.popovertarget]="panelId"
+  [attr.aria-activedescendant]="!searchable && open() && visibleOptions.length ? optionId(activeIndex()) : null"
+  (click)="toggleMenu($event)"
+  (keydown)="onKeydown($event)"
+  (blur)="onBlur()"
+>
+  @if(selectedOption; as selected) {
+    @if(selected.image) { <img class="trigger-image" [src]="selected.image" alt=""> }
+    @else if(selected.icon) { <span class="trigger-icon"><i class="ph" [class]="'ph ' + iconClass(selected.icon)" aria-hidden="true"></i></span> }
+    <span class="trigger-copy"><span class="trigger-label">{{ selected.label }}</span>@if(selected.description) { <span class="trigger-description">{{ selected.description }}</span> }</span>
+  } @else { <span class="trigger-copy"><span class="trigger-label">{{ placeholder }}</span></span> }
+  <i class="ph ph-caret-down chevron" aria-hidden="true"></i>
+</button>
+
+<div
+  #panel
+  class="select-panel"
+  popover="auto"
+  [id]="panelId"
+  [class.panel-instance]="appearance === 'instance'"
+  [class.opens-above]="opensAbove()"
+  [style.left.px]="panelLeft()"
+  [style.top.px]="panelTop()"
+  [style.width.px]="panelWidth()"
+  [style.max-height.px]="panelHeight()"
+  (toggle)="onToggle($event)"
+  (keydown)="onKeydown($event)"
+>
+  @if(searchable) {
+    <div class="select-search">
+      <i class="ph ph-magnifying-glass" aria-hidden="true"></i>
+      <input
+        #searchInput
+        type="search"
+        role="combobox"
+        aria-autocomplete="list"
+        autocomplete="off"
+        spellcheck="false"
+        [attr.aria-label]="label + ' suchen'"
+        [attr.aria-expanded]="open()"
+        [attr.aria-controls]="listboxId"
+        [attr.aria-activedescendant]="open() && visibleOptions.length ? optionId(activeIndex()) : null"
+        [placeholder]="searchPlaceholder"
+        [value]="searchQuery()"
+        (input)="onSearch($event)"
+      >
+    </div>
+  }
+  <div #optionList class="select-options" role="listbox" [id]="listboxId" [attr.aria-label]="label">
+  @for(option of visibleOptions; track option.value; let index = $index) {
+    <button
+      class="select-option"
+      type="button"
+      role="option"
+      tabindex="-1"
+      [id]="optionId(index)"
+      [class.is-active]="activeIndex() === index"
+      [class.is-selected]="value() === option.value"
+      [attr.aria-selected]="value() === option.value"
+      (mouseenter)="activeIndex.set(index)"
+      (mousedown)="$event.preventDefault()"
+      (click)="choose(index, $event)"
+    >
+      @if(option.image) { <img class="option-image" [src]="option.image" alt="" loading="lazy"> }
+      @else if(option.icon) { <span class="option-icon"><i class="ph" [class]="'ph ' + iconClass(option.icon)" aria-hidden="true"></i></span> }
+      <span class="option-copy"><span class="option-label">{{ option.label }}</span>@if(option.description) { <span class="option-description">{{ option.description }}</span> }</span>
+      <span class="option-check" aria-hidden="true">@if(value() === option.value) { <i class="ph ph-check"></i> }</span>
+    </button>
+  }
+  </div>
+  @if(!visibleOptions.length) { <p class="select-empty" role="status">Keine passende Version gefunden.</p> }
+</div>

@@ -1,0 +1,32 @@
+[package]
+name = "syncmc"
+version = "0.1.0"
+description = "SyncMC desktop launcher alpha"
+license = "GPL-3.0-only"
+repository = "https://github.com/playmonkeei/SyncMC"
+edition = "2021"
+rust-version = "1.90"
+
+[lib]
+name = "syncmc_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2.12", features = [] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+tokio = { version = "1", features = ["process", "time", "sync", "io-util", "macros"] }
+sha1 = "0.10"
+sha2 = "0.10"
+keyring = { version = "3.6", features = ["apple-native", "windows-native", "sync-secret-service", "crypto-rust"] }
+uuid = { version = "1", features = ["v4"] }
+libc = "0.2"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+tar = { version = "0.4", default-features = false }
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
+futures-util = "0.3"
+regex = "1"

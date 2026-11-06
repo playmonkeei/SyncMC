@@ -1,0 +1,24 @@
+name: Idee vorschlagen
+description: Eine Funktion oder Verbesserung für SyncMC vorschlagen.
+title: "[Idee]: "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Welches Problem möchtest du lösen?
+      description: Beschreibe einen konkreten Anwendungsfall.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Dein Vorschlag
+      description: Wie sollte sich SyncMC verhalten? Skizzen oder Beispiele sind willkommen.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternativen und Kontext
+      description: Gibt es einen Workaround oder andere Ansätze?

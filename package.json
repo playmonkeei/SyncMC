@@ -1,0 +1,49 @@
+{
+  "name": "syncmc",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/angular.mjs serve --host 127.0.0.1 --port 4200",
+    "start": "npm run dev",
+    "build": "node scripts/angular.mjs build",
+    "tauri": "tauri",
+    "desktop": "tauri dev",
+    "desktop:build": "tauri build",
+    "test": "node --experimental-strip-types --test tests/*.test.ts",
+    "test:native": "cargo test --locked --manifest-path src-tauri/Cargo.toml --lib",
+    "check:publication": "node scripts/check-publication.mjs",
+    "hooks:install": "git config --local core.hooksPath scripts/hooks"
+  },
+  "dependencies": {
+    "@angular/common": "^22.2.0",
+    "@angular/compiler": "^22.2.0",
+    "@angular/core": "^22.2.0",
+    "@angular/forms": "^22.2.0",
+    "@angular/platform-browser": "^22.2.0",
+    "@fontsource/inter": "^5.2.0",
+    "@phosphor-icons/web": "^2.1.2",
+    "@tauri-apps/api": "^2.0.0",
+    "rxjs": "~7.8.2",
+    "tslib": "^2.8.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^22.2.0",
+    "@angular/cli": "^22.2.0",
+    "@angular/compiler-cli": "^22.2.0",
+    "@tauri-apps/cli": "^2.0.0",
+    "typescript": "~6.0.2"
+  },
+  "description": "Ein moderner Minecraft-Java-Launcher mit lokalen Instanzen, gepinnten Inhalten und Profilabgleich.",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/playmonkeei/SyncMC.git"
+  },
+  "bugs": {
+    "url": "https://github.com/playmonkeei/SyncMC/issues"
+  },
+  "homepage": "https://github.com/playmonkeei/SyncMC#readme",
+  "engines": {
+    "node": ">=24.16.0 <25"
+  }
+}
