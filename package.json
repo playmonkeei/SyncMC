@@ -31,7 +31,7 @@
     "@angular/cli": "^22.2.0",
     "@angular/compiler-cli": "^22.2.0",
     "@tauri-apps/cli": "^2.0.0",
-    "typescript": "~6.0.2"
+    "typescript": "~7.0.2"
   },
   "description": "Ein moderner Minecraft-Java-Launcher mit lokalen Instanzen, gepinnten Inhalten und Profilabgleich.",
   "license": "GPL-3.0-only",
