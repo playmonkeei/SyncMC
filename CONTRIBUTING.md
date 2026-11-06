@@ -48,6 +48,14 @@ Vor dem Commit die gewählten Dateien mit `git add` stagen und `npm run check:pu
 
 Beiträge werden unter der Projektlizenz [GPL-3.0-only](LICENSE) eingebracht. Drittanbieterdateien und ihre Lizenzhinweise müssen entsprechend gekennzeichnet bleiben.
 
+## Abhängigkeiten aktualisieren
+
+Dependabot prüft npm und Cargo wöchentlich und aktualisiert die Lockdateien innerhalb der bereits deklarierten Versionsbereiche. Bei regulären Versionsupdates werden Angular und TypeScript sowie die gemeinsam verwendeten RustCrypto-Pakete jeweils zusammengefasst. GitHub-Actions-Updates bilden eine eigene Gruppe. Die Regeln stehen in [.github/dependabot.yml](.github/dependabot.yml); die Bedeutung von `lockfile-only` erklärt die [offizielle Referenz](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#versioning-strategy).
+
+Neue Versionsbereiche werden bewusst migriert: Peer-Abhängigkeiten und API-Änderungen prüfen, die Manifest- und Lockdateien gemeinsam ändern und die vollständige CI abwarten. Bei Cargo können auch Versionswechsel vor 1.0 inkompatibel sein. Ein isoliertes Update eines von mehreren gemeinsam verwendeten `Digest`-Paketen genügt beispielsweise nicht.
+
+Sicherheitswarnungen bleiben aktiv. `lockfile-only` kann auch automatische Sicherheits-PRs begrenzen, wenn die Korrektur eine Manifeständerung benötigt. Solche Warnungen müssen deshalb geprüft und die nötigen Versionswechsel als eigene Migration bearbeitet werden. Ein erfolgreicher Testlauf allein ersetzt keine Prüfung der Änderungen bei Archivverarbeitung, Prüfsummen oder Kontodaten.
+
 ## Leitlinien für die Implementierung
 
 - Gemeinsame Instanzprofile und lokale Gerätewerte getrennt halten. Bestehende Profile bei Formatänderungen berücksichtigen.
