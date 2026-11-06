@@ -84,7 +84,11 @@ for (const path of paths) {
   const bytes = git(['show', `:${path}`]);
   // Images are inspected visually; unknown binary files require an explicit review.
   if (bytes.includes(0)) {
-    if (!/\.png$/i.test(path) || !bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) {
+    const png = /\.png$/i.test(path) && bytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+    // Tauri-generated Windows icon: allow only the exact reviewed public asset.
+    const windowsIcon = path === 'src-tauri/icons/icon.ico'
+      && createHash('sha256').update(bytes).digest('hex') === '637a97bc4544775533dc8efc7f29adcbd3ad33296e0195190cfd4a072b6abfda';
+    if (!png && !windowsIcon) {
       report(path, 0, 'Ungeprüfter Binärdateityp');
     }
     continue;
