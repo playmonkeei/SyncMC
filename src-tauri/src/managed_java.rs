@@ -336,7 +336,7 @@ fn file_hash(path: &Path) -> Result<(String, u64), String> {
         }
         hash.update(&buffer[..count]);
     }
-    Ok((format!("{:x}", hash.finalize()), size))
+    Ok((hex::encode(hash.finalize()), size))
 }
 
 fn archive_valid(path: &Path, package: &Package) -> Result<bool, String> {
@@ -437,7 +437,7 @@ async fn download(
     file.sync_all().map_err(|e| e.to_string())?;
     drop(file);
     if received != package.size
-        || !format!("{:x}", hasher.finalize()).eq_ignore_ascii_case(&package.checksum)
+        || !hex::encode(hasher.finalize()).eq_ignore_ascii_case(&package.checksum)
     {
         return Err("Die SHA-256-Prüfsumme oder Größe des Java-Archivs stimmt nicht. Es wurde nicht installiert.".into());
     }
@@ -640,7 +640,11 @@ fn extract_archive(archive: &Path, destination: &Path, zipped: bool) -> Result<(
             let mut entry = zip
                 .by_index(index)
                 .map_err(|_| "Ein Eintrag im Java-ZIP-Archiv ist beschädigt.")?;
-            let path = relative(entry.name().trim_end_matches('/'))?;
+            let name = entry
+                .name()
+                .map_err(|_| "Ungültiger Dateiname im Java-ZIP-Archiv.")?
+                .into_owned();
+            let path = relative(name.trim_end_matches('/'))?;
             if entry.is_dir() {
                 register(&path, 0)?;
                 fs::create_dir_all(managed_path(destination, &path, false)?)
@@ -1146,6 +1150,30 @@ mod tests {
         }
     }
 
+    #[test]
+    fn zip_paths_cannot_escape_runtime_or_native_destinations() {
+        use zip::write::SimpleFileOptions;
+
+        for name in ["../outside.dll", "nested/../../outside.dll", "C:/outside.dll"] {
+            let data = temporary();
+            let archive = data.0.join("runtime.zip");
+            let destination = data.0.join("extract");
+            fs::create_dir(&destination).unwrap();
+            let mut writer = zip::ZipWriter::new(File::create(&archive).unwrap());
+            writer.start_file(name, SimpleFileOptions::default()).unwrap();
+            writer.write_all(b"fixture bytes, never executed").unwrap();
+            writer.finish().unwrap();
+
+            assert!(extract_archive(&archive, &destination, true).is_err(), "{name}");
+            assert!(fs::read_dir(&destination).unwrap().next().is_none());
+            let archives = [(PathBuf::from("runtime.zip"), vec![])];
+            assert!(crate::minecraft::extract_natives(&data.0, &archives, Path::new("natives"))
+                .is_err(), "{name}");
+            assert!(!data.0.join("natives").exists());
+            assert!(!data.0.join("outside.dll").exists());
+        }
+    }
+
     #[cfg(unix)]
     #[test]
     fn preserves_internal_archive_links_but_rejects_symlink_write_pivots() {
@@ -1218,7 +1246,7 @@ mod tests {
         let path = data.0.join("archive");
         let mut item = package(21, "mac", "aarch64");
         item.size = 4;
-        item.checksum = format!("{:x}", Sha256::digest(b"good"));
+        item.checksum = hex::encode(Sha256::digest(b"good"));
         assert!(!archive_valid(&path, &item).unwrap());
         fs::write(&path, b"bad!").unwrap();
         assert!(!archive_valid(&path, &item).unwrap());

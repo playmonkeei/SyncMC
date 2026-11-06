@@ -2,23 +2,31 @@ version: 2
 updates:
   - package-ecosystem: npm
     directory: /
+    # Keep Angular and TypeScript inside the ranges declared by this app.
+    # Changes to compatibility ranges need a coordinated migration.
+    versioning-strategy: lockfile-only
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 2
     groups:
-      angular:
-        patterns: ['@angular/*']
+      angular-toolchain:
+        patterns: ['@angular/*', typescript]
       npm-minor-patch:
         patterns: ['*']
         update-types: [minor, patch]
   - package-ecosystem: cargo
     directory: /src-tauri
+    # Cargo's 0.x minor bumps can break APIs too; respect manifest ranges.
+    versioning-strategy: lockfile-only
     schedule:
       interval: weekly
       day: monday
-    open-pull-requests-limit: 3
+    open-pull-requests-limit: 2
     groups:
+      rustcrypto:
+        patterns: [sha1, sha2, hex]
+        update-types: [minor, patch]
       cargo-minor-patch:
         patterns: ['*']
         update-types: [minor, patch]

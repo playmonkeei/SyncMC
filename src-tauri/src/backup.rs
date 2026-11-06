@@ -348,7 +348,7 @@ fn hash_file(file: &Path) -> Result<(u64, String), String> {
         }
         hash.update(&buffer[..count]);
     }
-    Ok((bytes, format!("{:x}", hash.finalize())))
+    Ok((bytes, hex::encode(hash.finalize())))
 }
 
 fn copy_verified(
@@ -391,7 +391,7 @@ fn copy_verified(
     }
     output.sync_all().map_err(|e| e.to_string())?;
     drop(output);
-    let hash = format!("{:x}", hash.finalize());
+    let hash = hex::encode(hash.finalize());
     let after = input.metadata().map_err(|e| e.to_string())?;
     if bytes != initial.len()
         || after.len() != initial.len()
