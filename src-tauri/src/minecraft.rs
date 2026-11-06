@@ -248,7 +248,7 @@ pub(crate) fn verify_file(path: &Path, expected: &Download) -> Result<bool, Stri
         }
         hash.update(&buffer[..read]);
     }
-    Ok(format!("{:x}", hash.finalize()) == expected.sha1)
+    Ok(hex::encode(hash.finalize()) == expected.sha1)
 }
 
 pub(crate) async fn download(root: &Path, item: &Download) -> Result<u64, String> {
@@ -288,7 +288,7 @@ pub(crate) async fn download(root: &Path, item: &Download) -> Result<u64, String
                     .map_err(|e| format!("Download konnte nicht gespeichert werden: {e}"))?;
             }
             if item.size.is_some_and(|size| size != written)
-                || format!("{:x}", hash.finalize()) != item.sha1
+                || hex::encode(hash.finalize()) != item.sha1
             {
                 return Err(
                     "Minecraft-Prüfsumme stimmt nicht überein. Die Datei wird erneut geladen."
@@ -478,22 +478,26 @@ pub(crate) fn extract_natives(
             let mut entry = zip
                 .by_index(i)
                 .map_err(|e| format!("Native Bibliothek konnte nicht gelesen werden: {e}"))?;
+            let name = entry
+                .name()
+                .map_err(|_| "Ungültiger Dateiname im Minecraft-Archiv.")?
+                .into_owned();
             if entry.is_dir()
                 || excludes
                     .iter()
-                    .any(|prefix| entry.name().starts_with(prefix))
-                || entry.name().starts_with("META-INF/")
+                    .any(|prefix| name.starts_with(prefix))
+                || name.starts_with("META-INF/")
             {
                 continue;
             }
             if entry.unix_mode().is_some_and(|m| m & 0o170000 == 0o120000) {
                 return Err("Symbolischer Link im Minecraft-Archiv abgelehnt.".into());
             }
-            let relative = relative_path(entry.name())?;
+            let relative = relative_path(&name)?;
             // Modern artifacts also contain Java classes; keep only native binaries.
             if ![".dylib", ".jnilib", ".so", ".dll"]
                 .iter()
-                .any(|extension| entry.name().ends_with(extension))
+                .any(|extension| name.ends_with(extension))
             {
                 continue;
             }

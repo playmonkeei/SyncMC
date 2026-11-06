@@ -685,7 +685,7 @@ pub(crate) async fn download_file(expected: &CfFile, target: &Path) -> Result<()
                 .write_all(&chunk)
                 .map_err(|_| "Die CurseForge-Datei konnte nicht geschrieben werden.")?;
         }
-        let hash = format!("{:x}", digest.finalize());
+        let hash = hex::encode(digest.finalize());
         if size != current.file_length || !hash.eq_ignore_ascii_case(current.sha1()?) {
             return Err("Die CurseForge-Datei hat die SHA1-/Größenprüfung nicht bestanden.".into());
         }

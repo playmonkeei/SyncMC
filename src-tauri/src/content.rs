@@ -1210,7 +1210,7 @@ fn hash_file(path: &Path, hash: &str, size: u64) -> Result<bool, String> {
         }
         digest.update(&buffer[..count]);
     }
-    Ok(format!("{:x}", digest.finalize()).eq_ignore_ascii_case(hash))
+    Ok(hex::encode(digest.finalize()).eq_ignore_ascii_case(hash))
 }
 
 async fn cache_file(root: &Path, file: &ApiFile) -> Result<PathBuf, String> {
@@ -1263,7 +1263,7 @@ async fn cache_file(root: &Path, file: &ApiFile) -> Result<PathBuf, String> {
                     .write_all(&chunk)
                     .map_err(|e| format!("Die Moddatei konnte nicht gespeichert werden: {e}"))?;
             }
-            if written != file.size || format!("{:x}", digest.finalize()) != hash {
+            if written != file.size || hex::encode(digest.finalize()) != hash {
                 return Err(
                     "SHA-512-Prüfung fehlgeschlagen. Die Moddatei wird erneut geladen.".into(),
                 );
@@ -1357,10 +1357,10 @@ fn verified_curseforge_bytes(
         sha1.update(&buffer[..count]);
         sha512.update(&buffer[..count]);
     }
-    if !format!("{:x}", sha1.finalize()).eq_ignore_ascii_case(expected) {
+    if !hex::encode(sha1.finalize()).eq_ignore_ascii_case(expected) {
         return Ok(None);
     }
-    let sha512 = format!("{:x}", sha512.finalize());
+    let sha512 = hex::encode(sha512.finalize());
     if extra_sha512.is_some_and(|expected| !expected.eq_ignore_ascii_case(&sha512)) {
         return Err("Die zusätzliche SHA-512-Prüfsumme im Profil passt nicht zu den offiziell geprüften CurseForge-Dateibytes. Die Instanz wurde nicht verändert.".into());
     }
@@ -1475,13 +1475,10 @@ fn fingerprint(contents: &[ContentSelection]) -> Result<String, String> {
             })
             .collect::<Vec<_>>();
         rows.sort_by(|a, b| a.0.cmp(b.0).then_with(|| a.1.cmp(b.1)));
-        return Ok(format!(
-            "{:x}",
-            Sha512::digest(
-                serde_json::to_vec(&("syncmc-provider-content-v2", rows))
-                    .map_err(|error| error.to_string())?
-            )
-        ));
+        return Ok(hex::encode(Sha512::digest(
+            serde_json::to_vec(&("syncmc-provider-content-v2", rows))
+                .map_err(|error| error.to_string())?,
+        )));
     }
     let mut rows = contents
         .iter()
@@ -1498,10 +1495,9 @@ fn fingerprint(contents: &[ContentSelection]) -> Result<String, String> {
         })
         .collect::<Vec<_>>();
     rows.sort_by(|a, b| a.0.cmp(b.0));
-    Ok(format!(
-        "{:x}",
-        Sha512::digest(serde_json::to_vec(&rows).map_err(|e| e.to_string())?)
-    ))
+    Ok(hex::encode(Sha512::digest(
+        serde_json::to_vec(&rows).map_err(|e| e.to_string())?,
+    )))
 }
 
 fn instance_relative(instance_id: &str) -> Result<PathBuf, String> {
@@ -2136,6 +2132,48 @@ mod tests {
     use serde_json::json;
     use std::sync::atomic::{AtomicUsize, Ordering};
 
+    #[test]
+    fn checksum_hex_preserves_known_vectors_and_leading_zeroes() {
+        // Fixed vectors independently checked with Python hashlib. Persisted hashes
+        // must retain lowercase hex and two digits per byte across crate upgrades.
+        for (payload, expected) in [
+            (
+                b"abc".as_slice(),
+                "a9993e364706816aba3e25717850c26c9cd0d89d",
+            ),
+            (
+                b"syncmc-checksum-146".as_slice(),
+                "0082624317edd79130ade93073010d2abb486099",
+            ),
+        ] {
+            assert_eq!(hex::encode(Sha1::digest(payload)), expected);
+        }
+        for (payload, expected) in [
+            (
+                b"abc".as_slice(),
+                "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+            ),
+            (
+                b"syncmc-checksum-242".as_slice(),
+                "00a3fd5db556480fa61426d0e76fca66a3cefd823f8a4d38887baf1c697f4acd",
+            ),
+        ] {
+            assert_eq!(hex::encode(sha2::Sha256::digest(payload)), expected);
+        }
+        for (payload, expected) in [
+            (
+                b"abc".as_slice(),
+                "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f",
+            ),
+            (
+                b"syncmc-checksum-40".as_slice(),
+                "008dc9bd355ec011f83ad42883d535565b1eb96bcadec553b272fc53bba0a6084dbe2d28138b270783fb33fc3306a9d2f5b47c6b9e57deb80ed4e601fb94a94b",
+            ),
+        ] {
+            assert_eq!(hex::encode(Sha512::digest(payload)), expected);
+        }
+    }
+
     #[derive(Default)]
     struct Fixture {
         versions: BTreeMap<String, ApiVersion>,
@@ -2173,7 +2211,7 @@ mod tests {
     }
 
     fn version(id: &str, project: &str, dependencies: serde_json::Value) -> ApiVersion {
-        serde_json::from_value(json!({"id":id,"project_id":project,"version_number":id,"version_type":"release","game_versions":["1.21.1"],"loaders":["fabric"],"date_published":"2026-01-01T00:00:00Z","files":[{"filename":format!("{id}.jar"),"url":format!("https://cdn.modrinth.com/data/{project}/versions/{id}/{id}.jar"),"hashes":{"sha512":format!("{:x}",Sha512::digest(b"jar"))},"primary":true,"size":3}],"dependencies":dependencies})).unwrap()
+        serde_json::from_value(json!({"id":id,"project_id":project,"version_number":id,"version_type":"release","game_versions":["1.21.1"],"loaders":["fabric"],"date_published":"2026-01-01T00:00:00Z","files":[{"filename":format!("{id}.jar"),"url":format!("https://cdn.modrinth.com/data/{project}/versions/{id}/{id}.jar"),"hashes":{"sha512":hex::encode(Sha512::digest(b"jar"))},"primary":true,"size":3}],"dependencies":dependencies})).unwrap()
     }
 
     fn project(id: &str) -> ApiProject {
@@ -2271,7 +2309,7 @@ mod tests {
         fixture
     }
     fn cf_version(id: u64, project: u64, payload: &[u8], dependencies: Value) -> ApiVersion {
-        let raw:crate::curseforge::CfFile=serde_json::from_value(json!({"id":id,"modId":project,"gameId":432,"fileName":format!("cf-{id}.jar"),"fileLength":payload.len(),"isAvailable":true,"downloadUrl":"https://edge.forgecdn.net/files/9999/1/fixture.jar","gameVersions":["1.21.1","Fabric"],"hashes":[{"value":format!("{:x}",Sha1::digest(payload)),"algo":1}],"dependencies":dependencies,"releaseType":1,"fileDate":"2026-11-05T00:00:00Z","fileStatus":4})).unwrap();
+        let raw:crate::curseforge::CfFile=serde_json::from_value(json!({"id":id,"modId":project,"gameId":432,"fileName":format!("cf-{id}.jar"),"fileLength":payload.len(),"isAvailable":true,"downloadUrl":"https://edge.forgecdn.net/files/9999/1/fixture.jar","gameVersions":["1.21.1","Fabric"],"hashes":[{"value":hex::encode(Sha1::digest(payload)),"algo":1}],"dependencies":dependencies,"releaseType":1,"fileDate":"2026-11-05T00:00:00Z","fileStatus":4})).unwrap();
         curseforge_version(raw).unwrap()
     }
 
@@ -2284,11 +2322,11 @@ mod tests {
         );
         mr.files[0]
             .hashes
-            .insert("sha512".into(), format!("{:x}", Sha512::digest(b"mr-root")));
+            .insert("sha512".into(), hex::encode(Sha512::digest(b"mr-root")));
         let mut mr_dep = version("901", "456", json!([]));
         mr_dep.files[0].hashes.insert(
             "sha512".into(),
-            format!("{:x}", Sha512::digest(b"mr-dependency")),
+            hex::encode(Sha512::digest(b"mr-dependency")),
         );
         let cf = cf_version(
             900,
@@ -2396,7 +2434,7 @@ mod tests {
         let computed = verified_curseforge_bytes(&target, file, None)
             .unwrap()
             .unwrap();
-        assert_eq!(computed, format!("{:x}", Sha512::digest(payload)));
+        assert_eq!(computed, hex::encode(Sha512::digest(payload)));
         let mut installed = selection(&version);
         installed.sha512 = Some(computed.clone());
         let planned = selection(&version);
@@ -2434,7 +2472,7 @@ mod tests {
             .unwrap();
         for item in &mut resolved {
             if item.selection.source == "curseforge" {
-                item.selection.sha512 = Some(format!("{:x}", Sha512::digest(b"jar")));
+                item.selection.sha512 = Some(hex::encode(Sha512::digest(b"jar")));
             }
         }
         assert!(distinct_mod_binaries(&resolved)
@@ -3090,7 +3128,7 @@ mod tests {
             .unwrap();
         let previous_size = changed_entry["size"].as_u64().unwrap();
         changed_entry["size"] = json!(changed.len());
-        changed_entry["sha512"] = json!(format!("{:x}", Sha512::digest(&changed)));
+        changed_entry["sha512"] = json!(hex::encode(Sha512::digest(&changed)));
         manifest["summary"]["totalBytes"] = json!(
             manifest["summary"]["totalBytes"].as_u64().unwrap() - previous_size
                 + changed.len() as u64
@@ -3115,7 +3153,7 @@ mod tests {
             instance_id: "test".into(),
             files: vec![LockedFile {
                 path: "mods/partially-copied.jar".into(),
-                sha512: format!("{:x}", Sha512::digest(b"partial")),
+                sha512: hex::encode(Sha512::digest(b"partial")),
                 size: 7,
             }],
         };
@@ -3173,7 +3211,7 @@ mod tests {
 
             let restored=install_at(&root,instance,game,"fabric",vec![original]).await.unwrap();
             let old=read_lock(&root,instance).unwrap().unwrap();
-            let partial=LockedFile{path:"mods/interrupted-smoke.jar".into(),sha512:format!("{:x}",Sha512::digest(b"partial")),size:7};
+            let partial=LockedFile{path:"mods/interrupted-smoke.jar".into(),sha512:hex::encode(Sha512::digest(b"partial")),size:7};
             let partial_path=prepare_file(&root,&instance_relative(instance).unwrap().join(&partial.path)).unwrap();
             fs::write(&partial_path,b"partial").unwrap();
             let pending=PendingContent{format:"syncmc-content-pending".into(),version:1,instance_id:instance.into(),files:old.files.into_iter().chain([partial]).collect()};
