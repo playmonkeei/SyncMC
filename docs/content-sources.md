@@ -10,7 +10,7 @@ Diese Gruppierung ist ein Darstellungshinweis, kein Nachweis identischer Dateien
 
 ## Stand von CurseForge
 
-Die native Anbindung unterstützt Suche, Versionsauswahl und Downloads einschließlich Pflichtabhängigkeiten. Sie benötigt einen eigenen genehmigten API-Schlüssel. Der zulässige Nutzungsumfang für eine öffentliche Veröffentlichung ist noch zu klären. Mojangs ausstehende Freigabe ist eine separate Voraussetzung für die Minecraft-Anmeldung und den Spielstart.
+Die native Anbindung unterstützt Suche, Versionsauswahl und Downloads einschließlich Pflichtabhängigkeiten. Sie benötigt einen eigenen genehmigten API-Schlüssel. Der zulässige Nutzungsumfang für eine öffentliche Veröffentlichung ist noch zu klären. Die separate Mojang-Freigabe für die Minecraft-API wurde am **6. November 2026** bestätigt; die geprüften Konto- und Spielabläufe sind in [authentication.md](authentication.md) dokumentiert.
 
 CurseForge verlangt einen eigenen Antrag für Drittanbieter. Der offizielle [Artikel zum API-Zugang](https://support.curseforge.com/support/solutions/articles/9000208346-about-the-curseforge-api-and-how-to-apply-for-a-key) verlinkt das [Antragsformular](https://forms.monday.com/forms/dce5ccb7afda9a1c21dab1a1aa1d84eb?r=use1). Der Antrag wird von Overwolf geprüft.
 

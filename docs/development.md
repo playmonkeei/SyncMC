@@ -148,7 +148,7 @@ Dieser Test lädt ein offizielles Eclipse-Temurin-Paket, prüft Wiederverwendung
 
 Bei einem Testbericht den geprüften Betriebssystem- und Versionsstand sowie den tatsächlichen Umfang angeben. Reine Tests, simulierte UI-Abläufe und echte Downloads sind kein Nachweis eines authentifizierten Spielstarts. Persönliche Daten, Zugangsdaten und private Dateipfade vor dem Teilen entfernen.
 
-Die Minecraft-API-Freigabe für die SyncMC-App steht noch aus. Nach deren Erteilung bleibt die persönliche Abnahme: anmelden → Fabric-Instanz mit Mod und Pflichtabhängigkeit starten → Welt betreten → speichern und beenden → App neu öffnen → erneut starten → abmelden. Der aktuelle Stand steht in [authentication.md](authentication.md); die Voraussetzungen und Einschränkungen von CurseForge stehen in [content-sources.md](content-sources.md).
+Mojang hat die Minecraft-API-Freigabe am **6. November 2026** bestätigt. Am **7. November 2026** wurde unter macOS ARM64 der echte Ablauf mit Minecraft 1.21.1, Fabric 0.20.1 und verwaltetem Temurin Java 21.0.13 geprüft: anmelden → Testwelt betreten → speichern und Minecraft regulär mit Exit-Code 0 beenden → SyncMC vollständig beenden und neu öffnen → Minecraft ohne neue Microsoft-Anmeldung starten → dieselbe gespeicherte Welt erneut laden. Die Sitzungserneuerung und der Erhalt der Welt sind damit bestätigt. Von der persönlichen Konto- und Spielabnahme bleibt die Abmeldeprüfung offen. Der aktuelle Stand steht in [authentication.md](authentication.md); die Voraussetzungen und Einschränkungen von CurseForge stehen in [content-sources.md](content-sources.md).
 
 ## Hinweise zur lokalen Umgebung
 

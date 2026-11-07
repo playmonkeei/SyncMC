@@ -45,7 +45,7 @@ Die reinen Vergleichstests laufen mit:
 node --experimental-strip-types --test tests/profile-sync.test.ts
 ```
 
-Native Download-, Dateisicherungs- und Wiederherstellungstests liegen bei den jeweiligen Rust-Modulen. Ein echter Minecraft-Spieltest benötigt weiterhin die ausstehende Mojang-Freigabe; die Java- und Sicherungsabläufe lassen sich unabhängig davon prüfen.
+Native Download-, Dateisicherungs- und Wiederherstellungstests liegen bei den jeweiligen Rust-Modulen. Nach der bestätigten Minecraft-API-Freigabe vom **6. November 2026** wurden am **7. November 2026** unter macOS ARM64 mit der verwalteten Temurin-Laufzeit Java 21.0.13 die echte Kontoanmeldung, das Betreten und Speichern einer Testwelt sowie das reguläre Beenden mit Exit-Code 0 geprüft. Nach einem vollständigen SyncMC-Neustart startete Minecraft ohne neue Microsoft-Anmeldung und lud dieselbe gespeicherte Welt erneut. Dies bestätigt die Sitzungserneuerung und den Erhalt der Welt; die Abmeldeprüfung bleibt offen. Die Java- und Sicherungsabläufe lassen sich unabhängig davon prüfen.
 
 Der optionale echte Java-Test lädt das offizielle Paket in einen isolierten Testordner und prüft Wiederverwendung sowie Reparatur einer dort absichtlich beschädigten Java-Datei:
 

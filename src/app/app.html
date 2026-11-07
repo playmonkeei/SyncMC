@@ -328,7 +328,6 @@
       } @else {
         <button class="button primary full" [disabled]="loginBusy()" (click)="beginLogin()">{{ loginBusy() ? 'Anmeldung vorbereiten …' : 'Mit Microsoft anmelden' }}<i aria-hidden="true" class="ph ph-arrow-up-right"></i></button>
         <p class="caption muted launch-status">Die Anmeldung findet im Systembrowser statt. SyncMC erhält keine Passwörter.</p>
-        @if(usingDefaultMicrosoftClient()) { <p class="caption muted launch-status">Die Freigabe des Minecraft-API-Zugangs für SyncMC steht noch aus. Dadurch kann die Anmeldung beim Zugriff auf Minecraft vorerst scheitern.</p> }
         <details class="account-setup"><summary>Erweitert: Microsoft-App-Client-ID</summary>
           <p>SyncMC verwendet seine eigene Microsoft-App. Du brauchst dafür keine eigene App zu registrieren. Ändere die Client-ID nur, wenn du bewusst eine andere registrierte App verwenden möchtest.</p>
           <label class="account-client-id">Microsoft-App-Client-ID<input aria-label="Microsoft-App-Client-ID" [placeholder]="defaultMicrosoftClientId" [value]="microsoftClientIdDraft" (input)="microsoftClientIdDraft = $any($event.target).value" (change)="saveClientId(microsoftClientIdDraft)" maxlength="100" spellcheck="false"></label>

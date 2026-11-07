@@ -32,7 +32,7 @@ Eine schlanke Vanilla-Welt. Ein sorgfältig zusammengestelltes Fabric-Setup. Ein
 Die Idee dahinter: **Das gemeinsame Profil beschreibt dein Setup. Dein Gerät bestimmt, wie es läuft.** Minecraft-Version, Modloader und konkrete Inhaltsversionen gehören zur Instanz; Java, RAM und Vollbild bleiben lokale Geräteeinstellungen. Profile lassen sich bereits per Datei abgleichen. Automatischer Cloud-Sync ist das nächste größere Ziel.
 
 > [!IMPORTANT]
-> **SyncMC ist eine frühe Alpha für Entwicklung und Feedback.** Vanilla-/Fabric-Installation, Inhaltsverwaltung und Sicherungen sind implementiert. Die Mojang-Freigabe für die eigene Microsoft-App steht noch aus; ein vollständiger authentifizierter Spielstart ist noch nicht bestätigt. Es gibt derzeit keine fertigen Installer. Details: [Anmeldung](docs/authentication.md) und [Inhaltsquellen](docs/content-sources.md).
+> **SyncMC ist eine frühe Alpha für Entwicklung und Feedback.** Vanilla-/Fabric-Installation, Inhaltsverwaltung und Sicherungen sind implementiert. Mojang hat den Antrag auf Minecraft-API-Zugang am 6. November 2026 genehmigt. Die echte Kontoanmeldung, das Speichern einer Welt und ihr erneutes Laden nach einem vollständigen App-Neustart wurden unter macOS ARM64 geprüft. Es gibt derzeit keine fertigen Installer. Details: [Anmeldung](docs/authentication.md) und [Inhaltsquellen](docs/content-sources.md).
 
 ## Ein erster Blick
 
@@ -66,7 +66,7 @@ Die Oberfläche verwendet Angular und Signals, der native Kern Tauri und Rust. I
 
 ### Bewusst transparent
 
-- **Anmeldung:** Microsoft Device Code und die weitere Kontoprüfung sind implementiert. Die Minecraft-Services-Freigabe ist noch offen.
+- **Anmeldung:** Die echte Microsoft-/Minecraft-Anmeldung einschließlich Spielberechtigung und Java-Profil wurde am 7. November 2026 unter macOS ARM64 bestätigt. Welt speichern, regulär beenden und nach vollständigem App-Neustart ohne neue Microsoft-Anmeldung erneut starten und die Welt laden sind geprüft. Die Abmeldeprüfung steht noch aus.
 - **CurseForge:** Die native Anbindung ist technisch geprüft. Der zulässige Nutzungsumfang für eine öffentliche Distribution ist noch zu klären; es wird kein API-Key mitgeliefert.
 - **Plattformen:** macOS ARM64 wurde lokal geprüft. Linux und Windows sind vorgesehen; CI prüft den nativen Kern auf allen drei Systemen. Das ersetzt noch keinen vollständigen App-Test pro Plattform.
 - **Noch geplant:** Forge/NeoForge, automatischer Cloud-Sync und signierte Installer. Data Packs benötigen künftig eine konkrete Weltzuordnung.
@@ -107,7 +107,9 @@ Weitere Einrichtung, Architektur und optionale Integrationstests: **[Entwicklung
 - [x] Eigenständige Desktop-Oberfläche und lokale Instanzverwaltung
 - [x] Vanilla-/Fabric-Installation, Inhalts-Pins und Pflichtabhängigkeiten
 - [x] Java-Verwaltung, Instanzsicherungen und Profilabgleich
-- [ ] Mojang-Freigabe und vollständige Konto-/Spiel-Abnahme
+- [x] Mojang-Freigabe für den Minecraft-API-Zugang
+- [x] Kontoanmeldung, Welt speichern und erneut laden nach App-Neustart unter macOS ARM64
+- [ ] Abmeldung im echten Kontoablauf prüfen
 - [ ] CurseForge-Nutzungsumfang für die Distribution klären
 - [ ] App-Abnahme unter Windows und Linux
 - [ ] Signierte Builds und Installer

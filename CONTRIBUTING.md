@@ -22,7 +22,7 @@ Suche zunächst nach einem bestehenden Issue. Ein neuer Bericht sollte enthalten
 - Bei Installationsproblemen die Minecraft-Version, den Loader und die Inhaltsquelle.
 - Einen passenden Screenshot oder einen gekürzten, bereinigten Logauszug.
 
-Entferne vor dem Hochladen Zugangstokens, Benutzer-Codes, API-Schlüssel, persönliche Kontodaten und private Dateipfade. Die öffentliche Microsoft-Client-ID ist eine Anwendungskennung und kein Geheimnis. Eine noch fehlende Mojang-Freigabe ist im [Anmeldestatus](docs/authentication.md) dokumentiert.
+Entferne vor dem Hochladen Zugangstokens, Benutzer-Codes, API-Schlüssel, persönliche Kontodaten und private Dateipfade. Die öffentliche Microsoft-Client-ID ist eine Anwendungskennung und kein Geheimnis. Der aktuelle Freigabe- und Prüfstand ist im [Anmeldestatus](docs/authentication.md) dokumentiert.
 
 ## Änderungen vorschlagen
 

@@ -12,7 +12,13 @@ Unter **Minecraft-Konto → Erweitert** lässt sich für eigene Forks oder Entwi
 
 ## Aktueller Stand der Freigabe und Prüfung
 
-Die eigene SyncMC-App wurde am **5. November 2026** für persönliche Microsoft-Konten registriert; Public-Client-Flows sind aktiviert. Der Antrag auf Minecraft-API-Zugang wurde am **5. November 2026** erfolgreich eingereicht. **Die Prüfung und Mojang-Freigabe für Minecraft Services stehen noch aus.** Die echte Microsoft-Geräteanmeldung wurde erfolgreich bestätigt. Anschließend verweigert Minecraft Services den Zugriff mit HTTP 403. Ein vollständiger Minecraft-Kontoablauf und ein authentifizierter Spielstart sind deshalb noch nicht nachgewiesen.
+Die eigene SyncMC-App wurde am **5. November 2026** für persönliche Microsoft-Konten registriert; Public-Client-Flows sind aktiviert. Der Antrag auf Minecraft-API-Zugang wurde am **5. November 2026** erfolgreich eingereicht. **Mojang Enforcement hat per E-Mail vom 6. November 2026 (Betreff „AppID Review Complete (11.06.2026)“) die Genehmigung der eingereichten Anwendung(en) für die API-Allowlist bestätigt.** Die E-Mail nennt keine konkrete Client-ID; die Zuordnung zum SyncMC-Antrag beruht auf dem zuvor eingereichten Antrag.
+
+Vor der Freigabe funktionierte bereits die Microsoft-Geräteanmeldung; der anschließende Zugriff auf Minecraft Services scheiterte damals mit HTTP 403. Am **7. November 2026** wurde die Anmeldung nach der Freigabe mit der SyncMC-Standard-ID erfolgreich abgeschlossen: Microsoft, Xbox Live, XSTS, Minecraft-Spielberechtigung und Java-Profil wurden geprüft; das verbundene Profil erschien in SyncMC.
+
+Anschließend startete SyncMC unter **macOS ARM64** die vorbereitete Instanz mit **Minecraft 1.21.1, Fabric 0.20.1 und verwaltetem Eclipse Temurin Java 21.0.13**. Der Launcher meldete einen laufenden Spielprozess; das bereinigte Protokoll bestätigte das Laden von Fabric sowie die Initialisierung von Texturatlanten, Grafik und Audio. Eine lokale Bildschirmaufnahme vom **7. November 2026 gegen 10:12 Uhr** bestätigte das gerenderte Optionsmenü im Minecraft-Fenster.
+
+Danach wurde eine neue lokale Testwelt angelegt und sichtbar betreten. Nach **Save and Quit to Title** bestätigte das bereinigte Protokoll das Speichern aller Dimensionen; Minecraft wurde über **Quit Game** regulär beendet und SyncMC zeigte Exit-Code 0. Anschließend wurde SyncMC vollständig beendet und als neuer Prozess gestartet. Das verbundene Profil erschien ohne erneute Geräteanmeldung; **Minecraft starten** startete das Spiel erneut erfolgreich. Dieser Start prüfte die Sitzungserneuerung aus dem gespeicherten Refresh-Token einschließlich erneuter Minecraft-Spielberechtigungs- und Profilprüfung. Dieselbe gespeicherte Testwelt ließ sich anschließend erneut öffnen; die wiederhergestellte Szene wurde visuell und der Weltbeitritt im bereinigten Protokoll bestätigt. Von der unten aufgeführten Konto- und Spielabnahme bleibt die Abmeldung offen.
 
 Für diese Registrierung liefert Microsoft `https://www.microsoft.com/link` und einen achtstelligen Benutzer-Code. SyncMC übernimmt die geprüfte Adresse unverändert aus der Providerantwort und öffnet sie nur für einen aktiven, noch gültigen Anmeldeablauf. Die zugehörigen Regressionstests prüfen auch den alternativen Microsoft-Device-Login mit neunstelligem Code.
 
@@ -37,11 +43,21 @@ Die automatisierten Tests für die Anmeldung verwenden keine Konten, keine echte
 cargo test --manifest-path src-tauri/Cargo.toml auth::tests
 ```
 
-Nach Freigabe der eigenen SyncMC-App bleibt der persönliche Abnahmetest: anmelden → Profilname erscheint → Instanz starten → App und Spiel beenden → App erneut öffnen → erneut starten → abmelden. Ein erfolgreicher vollständiger Konto- und Spieltest ist noch nicht bestätigt.
+Stand der persönlichen Abnahme mit der SyncMC-Standard-ID vom **7. November 2026**:
+
+- [x] Echte Anmeldung einschließlich Spielberechtigung und Java-Profil; verbundenes Profil erscheint in SyncMC.
+- [x] Authentifizierten Spielprozess starten; Fabric sowie Grafik- und Audioinitialisierung im bereinigten Protokoll bestätigt.
+- [x] Gerendertes Spielmenü visuell prüfen: Optionsmenü im Minecraft-Fenster bestätigt.
+- [x] Eine neue lokale Testwelt betreten, alle Dimensionen speichern und das Spiel regulär mit Exit-Code 0 beenden.
+- [x] SyncMC vollständig beenden und als neuen Prozess öffnen; Sitzung aus dem gespeicherten Refresh-Token erneuern und Minecraft ohne erneute Geräteanmeldung erfolgreich starten.
+- [x] Dieselbe gespeicherte Testwelt nach dem Neustart erneut öffnen und visuell prüfen.
+- [ ] In SyncMC abmelden und den entfernten Kontostatus prüfen.
+
+Für den Abschluss dieser Konto- und Spielabnahme steht nur noch die Abmeldung aus. Das Konto blieb verbunden; die erneut geöffnete Testwelt wurde pausiert. Ein nach dem App-Neustart angezeigtes gespeichertes Profil allein weist keine erfolgreiche Sitzungserneuerung nach; diese wurde hier durch den erneuten authentifizierten Spielstart bestätigt.
 
 ## Anhang: eigene Registrierung für Betreiber und Forks
 
-Die folgenden Schritte betreffen die Pflege der zentralen SyncMC-Registrierung oder eine eigene Fork mit eigener Anwendungskennung. Sie sind **keine Einrichtungsschritte für jeden Spieler**. Die normale SyncMC-App nutzt die oben genannte Standard-ID. Die eigene SyncMC-Registrierung ist bereits angelegt; offen bleibt deren Mojang-Freigabe.
+Die folgenden Schritte betreffen die Pflege der zentralen SyncMC-Registrierung oder eine eigene Fork mit eigener Anwendungskennung. Sie sind **keine Einrichtungsschritte für jeden Spieler**. Die normale SyncMC-App nutzt die oben genannte Standard-ID. Die eigene SyncMC-Registrierung ist bereits angelegt; die Genehmigung des API-Antrags wurde bestätigt. Eigene Forks mit anderer Client-ID benötigen ihre eigene Freigabe.
 
 ### Wenn bisher nur ein privates Microsoft-Konto vorhanden ist
 
@@ -63,7 +79,7 @@ SyncMC fordert `XboxLive.signin offline_access` an. Der Login ist ein [Microsoft
 
 ### Minecraft-API-Freigabe für die eigene App beantragen
 
-Nach Microsoft folgen Xbox User Token, XSTS und Minecraft Services. Eine erfolgreiche Microsoft-Anmeldung beweist daher noch keinen Minecraft-Zugriff. Für neue Anwendungen verlangt Minecraft einen eigenen Freigabeantrag. Der offizielle [Hilfeartikel zum Java-Edition-API-Prüfverfahren](https://help.minecraft.net/hc/en-us/articles/16254801392141) verlinkt das aktive [AppID-Prüfformular](https://aka.ms/mce-reviewappid). Der SyncMC-Antrag wurde am **5. November 2026** einmal abgesendet; die anschließend angezeigte Dankeseite von Mojang Studios bestätigt die Einreichung. Eine Freigabe wurde damit noch nicht erteilt.
+Nach Microsoft folgen Xbox User Token, XSTS und Minecraft Services. Eine erfolgreiche Microsoft-Anmeldung beweist daher noch keinen Minecraft-Zugriff. Für neue Anwendungen verlangt Minecraft einen eigenen Freigabeantrag. Der offizielle [Hilfeartikel zum Java-Edition-API-Prüfverfahren](https://help.minecraft.net/hc/en-us/articles/16254801392141) verlinkt das aktive [AppID-Prüfformular](https://aka.ms/mce-reviewappid). Der SyncMC-Antrag wurde am **5. November 2026** einmal abgesendet; die anschließend angezeigte Dankeseite von Mojang Studios bestätigte zunächst die Einreichung. Die Genehmigung für die API-Allowlist wurde anschließend per E-Mail vom **6. November 2026** bestätigt (siehe Freigabestand oben).
 
 Laut Formular müssen Anwendungen den Spielbesitz prüfen und die Anmeldung vor dem Spielen verlangen. Anwendungen, die Sicherheitsprüfungen umgehen, werden abgelehnt. Neue Anwendungsnamen dürfen die dort genannten Namen **Mojang, Minecraft, Microsoft, Live, Xbox, Discord oder Hypixel** nicht enthalten. Die Anträge werden laut Formular **wöchentlich manuell geprüft**; doppelte Einreichungen beschleunigen dies nicht. Eine bestimmte Bearbeitungsdauer oder Genehmigung ist damit nicht zugesagt.
 
