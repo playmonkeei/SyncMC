@@ -86,6 +86,23 @@ node --experimental-strip-types --test tests/profile-sync.test.ts
 cargo test --locked --manifest-path src-tauri/Cargo.toml auth::tests
 ```
 
+### GLib-Sicherheitsbackport für Linux
+
+Tauris GTK3-Zweig verwendet eine lokale GLib-0.18.5-Kopie mit dem offiziellen
+Iterator-Fix. Herkunft, Archivprüfsumme und Entfernungskriterium stehen unter
+[src-tauri/vendor](../src-tauri/vendor/README.md).
+
+```sh
+npm run check:glib-backport
+cargo test --locked --release --manifest-path src-tauri/Cargo.toml -p syncmc-glib-regression
+```
+
+Die erste Prüfung benötigt keine nativen Bibliotheken und verifiziert die
+vollständige Quellkopie sowie deren Cargo-Einbindung. Der optimierte Verhaltenstest
+benötigt GLib-Entwicklungsbibliotheken und `pkg-config`; Linux-CI stellt beides
+bereits bereit. Beide Prüfungen laufen in CI. Die regulären nativen Testbefehle
+verwenden weiterhin standardmäßig nur das Anwendungspaket.
+
 ### Optionaler UI-Regressionstest
 
 [launcher-ui.spec.mjs](../tests/launcher-ui.spec.mjs) benötigt das Node-Modul `playwright` und installiertes Google Chrome. Playwright ist derzeit keine Projektabhängigkeit. Das Modul separat bereitstellen oder über `SYNCMC_PLAYWRIGHT_MODULE` einen importierbaren Modulpfad angeben.

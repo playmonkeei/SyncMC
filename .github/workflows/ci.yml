@@ -28,6 +28,8 @@ jobs:
           cache: npm
       - name: Check tracked files before publication
         run: node scripts/check-publication.mjs --all
+      - name: Verify the GLib security backport source and Cargo patch
+        run: npm run check:glib-backport
       - name: Install dependencies
         run: npm ci
       - name: Test profile sync, catalog & Minecraft versions
@@ -59,3 +61,6 @@ jobs:
       # Ignored tests download Minecraft/Java and stay opt-in for local testing.
       - name: Test native core with the locked dependency graph
         run: cargo test --locked --manifest-path src-tauri/Cargo.toml --lib
+      - name: Test GLib string iterator backport with optimizations
+        if: runner.os == 'Linux'
+        run: cargo test --locked --release --manifest-path src-tauri/Cargo.toml -p syncmc-glib-regression

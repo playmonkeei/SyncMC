@@ -2,6 +2,19 @@
 
 SyncMC ist eine frühe Alpha. Sicherheitskorrekturen werden für den aktuellen Stand auf `main` vorgenommen; ältere Entwicklungsstände erhalten keine zugesicherten Updates.
 
+## GLib-Sicherheitsfix für Linux
+
+Tauris GTK3-Abhängigkeiten verwenden GLib 0.18. SyncMC bindet dafür eine lokale
+GLib-0.18.5-Kopie mit dem offiziellen Fix für
+[RUSTSEC-2024-0429 / GHSA-wrw7-89jp-8q8g](https://rustsec.org/advisories/RUSTSEC-2024-0429.html)
+ein. Der Fix korrigiert den veränderlichen Ausgabezeiger in `VariantStrIter`.
+Die ursprüngliche Versionsnummer und MIT-Lizenz bleiben erhalten.
+
+[Herkunft, Archivprüfsumme und Upstream-Commit](src-tauri/vendor/README.md) sind
+dokumentiert. CI prüft die vollständige Quellintegrität und führt die betroffenen
+Iteratoroperationen unter Linux mit Compileroptimierungen aus. Der Backport kann
+entfallen, sobald Tauri durchgängig GLib 0.20 oder neuer unterstützt.
+
 ## Eine Sicherheitslücke melden
 
 Bitte veröffentliche keine Zugangsdaten, Kontoinformationen oder ausnutzbaren Details in einem öffentlichen Issue. Wenn im Repository **Security → Advisories → Report a vulnerability** verfügbar ist, verwende die private Meldung. Andernfalls eröffne ein Issue mit einer allgemeinen Bitte um einen vertraulichen Meldeweg und warte mit technischen Details, bis dieser vereinbart ist.

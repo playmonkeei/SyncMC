@@ -7,6 +7,16 @@ repository = "https://github.com/playmonkeei/SyncMC"
 edition = "2021"
 rust-version = "1.90"
 
+[workspace]
+members = ["tests/glib-variant-iter"]
+default-members = ["."]
+exclude = ["vendor/glib-0.18.5"]
+resolver = "2"
+
+[patch.crates-io]
+# GTK3 still needs the 0.18 API; carry the upstream iterator soundness fix.
+glib = { path = "vendor/glib-0.18.5" }
+
 [lib]
 name = "syncmc_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
