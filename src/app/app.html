@@ -342,9 +342,27 @@
     @if(dialog() === 'logs') {
       <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-terminal-window"></i></span><h2 id="dialog-title">Minecraft-Spielprotokoll.</h2><p>{{ game().running ? 'Minecraft läuft · ' + runningInstanceName() : 'Letzter Spielstart' }}{{ game().exitCode !== undefined && game().exitCode !== null ? ' · Exit-Code ' + game().exitCode : '' }}</p>
       @if(logsLoading()) { <div class="loading-state"><span class="spinner"></span>Protokoll laden …</div> }
-      <p class="caption muted">Zeigt die letzten 1.000 Meldungen dieses Spielstarts.</p>
-      <div class="game-log" tabindex="0" aria-label="Minecraft-Spielprotokoll">@for(log of gameLogs(); track $index) { <div [class.log-error]="log.stream === 'stderr'"><time>{{ log.timestamp * 1000 | date:'HH:mm:ss' }}</time><span>{{ log.line }}</span></div> } @empty { <p>Noch keine Meldungen. Starte Minecraft, um das Protokoll zu sehen.</p> }</div>
-      <div class="modal-actions"><button class="button glass" [disabled]="!gameLogs().length" (click)="copyLogs()">Protokoll kopieren<i aria-hidden="true" class="ph ph-copy"></i></button>@if(game().running) { <button class="button glass" [disabled]="gameStopping() || gameStopRequested()" (click)="stopGame()">{{ gameStopRequested() ? 'Beenden angefordert …' : 'Spiel beenden' }}<i aria-hidden="true" class="ph ph-stop"></i></button> }</div>
+      <div class="log-toolbar">
+        <label class="log-search"><i aria-hidden="true" class="ph ph-magnifying-glass"></i><input type="search" aria-label="Protokoll durchsuchen" placeholder="Meldung, Quelle oder Thread suchen …" [ngModel]="logQuery()" (ngModelChange)="logQuery.set($event)"></label>
+        <div class="log-filters" role="group" aria-label="Protokoll nach Level filtern">
+          <button aria-label="Alle" [attr.aria-pressed]="logFilter() === 'all'" (click)="logFilter.set('all')">Alle <span>{{ gameLogs().length }}</span></button>
+          <button aria-label="Warnungen" [attr.aria-pressed]="logFilter() === 'warnings'" (click)="logFilter.set('warnings')"><i aria-hidden="true" class="ph ph-warning"></i>Warnungen <span>{{ logWarnings() }}</span></button>
+          <button aria-label="Fehler" [attr.aria-pressed]="logFilter() === 'errors'" (click)="logFilter.set('errors')"><i aria-hidden="true" class="ph ph-x-circle"></i>Fehler <span>{{ logErrors() }}</span></button>
+        </div>
+      </div>
+      <div class="log-summary"><span>{{ visibleGameLogs().length }} von {{ gameLogs().length }} Meldungen · letzte 1.000</span><label><input type="checkbox" [ngModel]="logFollow()" (ngModelChange)="logFollow.set($event)">Automatisch scrollen</label></div>
+      <div #gameLog class="game-log" tabindex="0" role="region" aria-label="Minecraft-Spielprotokoll" [attr.aria-busy]="logsLoading()" (scroll)="onLogScroll($event)">
+        @for(log of visibleGameLogs(); track log) {
+          <div class="log-entry" [class.log-warning]="logLevel(log) === 'WARN'" [class.log-error]="logLevel(log) === 'ERROR' || logLevel(log) === 'FATAL'" [class.log-debug]="logLevel(log) === 'DEBUG' || logLevel(log) === 'TRACE'">
+            <time [attr.datetime]="log.timestamp * 1000 | date:'yyyy-MM-ddTHH:mm:ssZZZZZ'">{{ log.timestamp * 1000 | date:'HH:mm:ss' }}</time>
+            <span class="log-level">{{ logLabel(log) }}</span>
+            <div class="log-content"><div class="log-origin"><span>{{ logSource(log) }}</span>@if(log.thread) { <span class="log-thread">{{ log.thread }}</span> }</div><span class="log-message">{{ log.line }}</span></div>
+          </div>
+        } @empty {
+          <div class="log-empty"><i aria-hidden="true" [class]="gameLogs().length ? 'ph ph-magnifying-glass' : 'ph ph-terminal-window'"></i><p>{{ logsLoading() ? 'Protokoll wird geladen …' : gameLogs().length ? 'Keine passenden Meldungen.' : 'Noch keine Meldungen. Starte Minecraft, um das Protokoll zu sehen.' }}</p>@if(gameLogs().length) { <button class="text-button" (click)="logQuery.set(''); logFilter.set('all')">Filter zurücksetzen</button> }</div>
+        }
+      </div>
+      <div class="modal-actions"><button class="button glass" [disabled]="!visibleGameLogs().length" (click)="copyLogs()" title="Sichtbare Meldungen mit Zeit, Level und Quelle kopieren">Ansicht kopieren<i aria-hidden="true" class="ph ph-copy"></i></button>@if(game().running) { <button class="button glass" [disabled]="gameStopping() || gameStopRequested()" (click)="stopGame()">{{ gameStopRequested() ? 'Beenden angefordert …' : 'Spiel beenden' }}<i aria-hidden="true" class="ph ph-stop"></i></button> }</div>
       @if(gameError()) { <p class="form-error" role="alert">{{ gameError() }}</p> }
     }
     @if(dialog() === 'connect') { <span class="dialog-symbol"><i aria-hidden="true" class="ph ph-cloud"></i></span><h2 id="dialog-title">Dein Setup geht mit.</h2><p>Der automatische Dropbox-Abgleich ist noch nicht angebunden. Die Verbindung wird später direkt über Dropbox autorisiert.</p><div class="dialog-checklist"><span><i aria-hidden="true" class="ph ph-desktop"></i>Windows mit Windows, Mac mit Mac oder gemischt</span><span><i aria-hidden="true" class="ph ph-lock-key"></i>Zugang nur zum SyncMC-App-Ordner</span><span><i aria-hidden="true" class="ph ph-clock-counter-clockwise"></i>Versionierte Stände mit Wiederherstellung</span></div><p class="caption muted">Bis dahin kannst du deine Instanzprofile als Datei exportieren und auf einem anderen Gerät importieren.</p><button class="button primary full" [disabled]="exportBusy()" (click)="downloadManifest()">Instanzen exportieren<i aria-hidden="true" class="ph ph-download-simple"></i></button> }

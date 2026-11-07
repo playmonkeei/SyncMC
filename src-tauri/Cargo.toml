@@ -31,3 +31,5 @@ tar = { version = "0.4", default-features = false }
 flate2 = { version = "1", default-features = false, features = ["rust_backend"] }
 futures-util = "0.3"
 regex = "1"
+quick-xml = "0.42"
+time = { version = "0.3", default-features = false, features = ["std"] }

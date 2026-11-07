@@ -41,7 +41,14 @@ export interface MinecraftAccount { name: string; uuid: string }
 export interface LoginChallenge { flowId: string; userCode: string; verificationUri: string; expiresIn: number; interval: number }
 export interface LoginPoll { status: 'pending' | 'slow_down' | 'complete' | 'expired'; account?: MinecraftAccount }
 export interface GameStatus { running: boolean; instanceId?: string | null; pid?: number | null; exitCode?: number | null; startedAt?: number | null }
-export interface GameLog { timestamp: number; stream: string; line: string }
+export interface GameLog {
+  timestamp: number;
+  stream: string;
+  line: string;
+  level?: string;
+  logger?: string;
+  thread?: string;
+}
 export interface BackupSummary {
   id: string;
   instanceId: string;

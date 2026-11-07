@@ -1,4 +1,4 @@
-import { Component, HostListener, OnDestroy, computed, effect, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { listen } from '@tauri-apps/api/event';
@@ -12,6 +12,7 @@ import { MinecraftService, type MinecraftCatalog, type InstallationReport, type 
   type RuntimeInfo, type FabricLoaderVersion, type MinecraftAccount, type LoginChallenge,
   type GameStatus, type GameLog, type ContentProgress, type JavaInstallProgress, type BackupSummary } from './core/minecraft.service';
 import { groupMinecraftVersions, minecraftVersionLabel } from './core/minecraft-versions';
+import { filterGameLogs, formatGameLogs, gameLogLabel, gameLogLevel, gameLogSource, type GameLogFilter } from './core/game-logs';
 import { GlassSelect } from './shared/glass-select/glass-select.component';
 import type { Page, ContentKind, ContentSource, Loader, SearchHit, ModVersion, ModVersionFile, Instance } from './core/models';
 
@@ -147,6 +148,16 @@ export class App implements OnDestroy {
   readonly gameStopRequested = signal(false);
   readonly gameLogs = signal<GameLog[]>([]);
   readonly logsLoading = signal(false);
+  readonly logQuery = signal('');
+  readonly logFilter = signal<GameLogFilter>('all');
+  readonly logFollow = signal(true);
+  readonly logPanel = viewChild<ElementRef<HTMLElement>>('gameLog');
+  readonly visibleGameLogs = computed(() => filterGameLogs(this.gameLogs(), this.logFilter(), this.logQuery()));
+  readonly logWarnings = computed(() => this.gameLogs().filter(log => gameLogLevel(log) === 'WARN').length);
+  readonly logErrors = computed(() => this.gameLogs().filter(log => ['ERROR', 'FATAL'].includes(gameLogLevel(log))).length);
+  readonly logLevel = gameLogLevel;
+  readonly logLabel = gameLogLabel;
+  readonly logSource = gameLogSource;
   readonly contentInstallingId = signal('');
   readonly contentProgress = signal<ContentProgress | null>(null);
   readonly javaChecking = signal(false);
@@ -320,6 +331,13 @@ export class App implements OnDestroy {
     });
     if (this.page() === 'discover') void this.search();
     if (this.native) void this.initializeNative();
+    effect(onCleanup => {
+      const panel = this.logPanel()?.nativeElement;
+      this.visibleGameLogs();
+      if (!panel || !this.logFollow()) return;
+      const timer = setTimeout(() => { panel.scrollTop = panel.scrollHeight; }, 0);
+      onCleanup(() => clearTimeout(timer));
+    });
     effect(() => {
       if (this.dialog()) {
         this.lastActive = document.activeElement as HTMLElement;
@@ -741,6 +759,7 @@ export class App implements OnDestroy {
   }
 
   async openLogs(): Promise<void> {
+    this.logQuery.set(''); this.logFilter.set('all'); this.logFollow.set(true);
     this.dialog.set('logs');
     if (!this.native) return;
     this.logsLoading.set(true);
@@ -750,8 +769,13 @@ export class App implements OnDestroy {
   }
 
   async copyLogs(): Promise<void> {
-    try { await navigator.clipboard.writeText(this.gameLogs().map(log => `[${log.stream}] ${log.line}`).join('\n')); this.notify('Spielprotokoll kopiert.'); }
+    try { await navigator.clipboard.writeText(formatGameLogs(this.visibleGameLogs())); this.notify('Protokollansicht kopiert.'); }
     catch { this.notify('Das Spielprotokoll konnte nicht kopiert werden.'); }
+  }
+
+  onLogScroll(event: Event): void {
+    const panel = event.target as HTMLElement;
+    this.logFollow.set(panel.scrollHeight - panel.clientHeight - panel.scrollTop < 32);
   }
 
   navigate(page: Page): void {

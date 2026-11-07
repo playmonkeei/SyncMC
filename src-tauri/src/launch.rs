@@ -1,4 +1,6 @@
 //! Validated launch plans and a single supervised Minecraft process.
+pub use crate::game_log::GameLog;
+use crate::game_log::{LogParser, MAX_LINE_BYTES};
 use crate::{auth, content, minecraft as mc, runtime};
 use serde::Serialize;
 use serde_json::Value;
@@ -26,13 +28,6 @@ pub struct GameStatus {
     pub exit_code: Option<i32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub started_at: Option<u64>,
-}
-
-#[derive(Clone, Debug, Serialize)]
-pub struct GameLog {
-    pub timestamp: u64,
-    pub stream: String,
-    pub line: String,
 }
 
 #[derive(Default)]
@@ -414,16 +409,16 @@ fn push_log(
     line: &str,
     secret: &str,
 ) {
-    let line = if secret.is_empty() {
-        line.to_owned()
-    } else {
-        line.replace(secret, "[redacted]")
-    };
-    let entry = GameLog {
-        timestamp: now(),
-        stream: stream.into(),
-        line,
-    };
+    push_entry(app, file, GameLog::plain(stream, line, now()), secret);
+}
+
+fn push_entry(
+    app: &tauri::AppHandle,
+    file: &Arc<Mutex<File>>,
+    mut entry: GameLog,
+    secret: &str,
+) {
+    entry.redact(secret);
     if let Ok(mut state) = state().lock() {
         if state.logs.len() == 1500 {
             state.logs.pop_front();
@@ -431,12 +426,12 @@ fn push_log(
         state.logs.push_back(entry.clone());
     }
     if let Ok(mut file) = file.lock() {
-        if file.metadata().is_ok_and(|m| m.len() < 10 * 1024 * 1024) {
-            let _ = writeln!(
-                file,
-                "{} [{}] {}",
-                entry.timestamp, entry.stream, entry.line
-            );
+        let formatted = entry.formatted();
+        if file
+            .metadata()
+            .is_ok_and(|m| m.len() + formatted.len() as u64 + 1 <= 10 * 1024 * 1024)
+        {
+            let _ = writeln!(file, "{formatted}");
         }
     }
     let _ = app.emit("minecraft-game-log", entry);
@@ -452,6 +447,8 @@ async fn pipe_logs(
     let mut buffer = [0u8; 4096];
     let mut pending = Vec::new();
     let mut discarding = false;
+    let mut parser = LogParser::new(stream);
+    let mut discarded_tail = Vec::new();
     loop {
         let count = match pipe.read(&mut buffer).await {
             Ok(0) | Err(_) => break,
@@ -460,32 +457,52 @@ async fn pipe_logs(
         pending.extend_from_slice(&buffer[..count]);
         while let Some(newline) = pending.iter().position(|b| *b == b'\n') {
             let line: Vec<u8> = pending.drain(..=newline).collect();
-            if !discarding {
-                push_log(
-                    &app,
-                    &file,
-                    stream,
-                    String::from_utf8_lossy(&line).trim_end(),
-                    &secret,
-                );
+            if discarding {
+                discarded_tail.extend_from_slice(&line);
+                parser.discarded_line_tail(&String::from_utf8_lossy(&discarded_tail));
+                discarded_tail.clear();
+            } else {
+                let entries = if line.len() > MAX_LINE_BYTES {
+                    let entries = parser.long_line(
+                        &String::from_utf8_lossy(&line[..MAX_LINE_BYTES]),
+                        now(),
+                    );
+                    parser.discarded_line_tail(&String::from_utf8_lossy(&line));
+                    entries
+                } else {
+                    let line = String::from_utf8_lossy(&line);
+                    parser.line(line.trim_end_matches(['\r', '\n']), now())
+                };
+                for entry in entries {
+                    push_entry(&app, &file, entry, &secret);
+                }
             }
             discarding = false;
         }
-        if pending.len() > 64 * 1024 {
+        if pending.len() > MAX_LINE_BYTES {
             // Discard the entire pathological line, so no partial secret can escape redaction.
-            push_log(&app, &file, stream, "[Zu lange Protokollzeile gekürzt]", "");
+            if !discarding {
+                for entry in parser.long_line(&String::from_utf8_lossy(&pending), now()) {
+                    push_entry(&app, &file, entry, &secret);
+                }
+            }
+            discarded_tail.extend_from_slice(&pending);
+            parser.discarded_line_tail(&String::from_utf8_lossy(&discarded_tail));
+            // Enough overlap to recognize an event end split between reads.
+            if discarded_tail.len() > 32 {
+                discarded_tail.drain(..discarded_tail.len() - 32);
+            }
             pending.clear();
             discarding = true;
         }
     }
     if !discarding && !pending.is_empty() {
-        push_log(
-            &app,
-            &file,
-            stream,
-            &String::from_utf8_lossy(&pending),
-            &secret,
-        );
+        for entry in parser.line(&String::from_utf8_lossy(&pending), now()) {
+            push_entry(&app, &file, entry, &secret);
+        }
+    }
+    for entry in parser.finish(now()) {
+        push_entry(&app, &file, entry, &secret);
     }
 }
 
@@ -633,13 +650,15 @@ pub async fn launch_minecraft(
             err.abort();
         }
         let exit_code = result.ok().and_then(|s| s.code()).unwrap_or(-1);
-        push_log(
-            &app,
-            &file,
+        let mut exit_log = GameLog::plain(
             "launcher",
             &format!("Minecraft wurde beendet (Exit-Code {exit_code})."),
-            "",
+            now(),
         );
+        if exit_code != 0 {
+            exit_log.level = "ERROR".into();
+        }
+        push_entry(&app, &file, exit_log, "");
         let final_status = if let Ok(mut state) = state().lock() {
             state.status.running = false;
             state.status.exit_code = Some(exit_code);

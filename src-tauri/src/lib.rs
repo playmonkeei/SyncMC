@@ -3,6 +3,7 @@ mod backup;
 mod content;
 mod curseforge;
 mod fabric;
+mod game_log;
 mod launch;
 mod managed_java;
 mod minecraft;

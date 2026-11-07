@@ -128,12 +128,39 @@ nav { display:flex; } .sidebar nav { flex-direction:column; gap:9px; } .nav-item
 .login-waiting { display:flex; justify-content:center; align-items:center; gap:10px; margin:24px 0 18px; font-size:12px; color:#bac7ad; }
 .login-waiting .spinner { width:15px; height:15px; }
 .log-modal { width:850px; }
-.game-log { background:#141714; border:1px solid #dde7c526; border-radius:10px; padding:16px; height:380px; max-height:48dvh; overflow:auto; font:11px/1.8 ui-monospace,SFMono-Regular,monospace; color:#d7dfd0; user-select:text; }
-.game-log>div { display:flex; align-items:flex-start; gap:15px; }
-.game-log time { color:#7f9076; flex-shrink:0; }
-.game-log span { overflow-wrap:anywhere; white-space:pre-wrap; }
-.game-log .log-error { color:#efc4ad; }
-.game-log>p { color:#aab69e; }
+.log-toolbar { display:flex; flex-direction:column; gap:12px; }
+.log-search { display:flex; align-items:center; gap:10px; padding:0 13px; border:1px solid var(--line); border-radius:9px; background:#11150e55; }
+.log-search>i { font-size:18px; color:var(--muted); }
+.log-search:focus-within { border-color:#b6d38b; }
+.modal .log-search input { width:100%; min-width:0; min-height:42px; padding:10px 0; border:0; background:none; font-size:12px; outline:none; }
+.log-filters { display:flex; gap:6px; flex-wrap:wrap; }
+.log-filters button { display:inline-flex; align-items:center; gap:7px; min-height:34px; padding:7px 11px; border:1px solid transparent; border-radius:7px; font-size:12px; color:#bbc4b1; }
+.log-filters button:hover { background:#ffffff08; }
+.log-filters button[aria-pressed='true'] { background:#a8c87918; border-color:#bbd69b40; color:#e1efcf; }
+.log-filters i { font-size:15px; }
+.log-filters span { font-size:10px; font-variant-numeric:tabular-nums; opacity:.8; }
+.log-summary { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:16px 0 10px; font-size:11px; color:#b3bda9; }
+.log-summary label { display:flex; align-items:center; gap:7px; cursor:pointer; }
+.modal .log-summary input { width:14px; height:14px; min-height:0; margin:0; accent-color:#a8c879; }
+.game-log { background:#141714; border:1px solid #dde7c526; border-radius:10px; padding:6px; height:380px; max-height:44dvh; overflow:auto; overflow-anchor:none; font:12px/1.65 ui-monospace,SFMono-Regular,monospace; color:#d7dfd0; user-select:text; }
+.log-entry { display:grid; grid-template-columns:60px 50px minmax(0,1fr); align-items:start; gap:12px; padding:10px; border-bottom:1px solid #dde7c509; border-left:2px solid transparent; }
+.log-entry:last-child { border-bottom:0; }
+.log-entry time { padding-top:1px; color:#a2af99; font-size:11px; font-variant-numeric:tabular-nums; }
+.log-level { padding:2px 4px; border-radius:4px; background:#a6c58312; color:#b8d29e; text-align:center; font-size:10px; line-height:1.6; }
+.log-content { min-width:0; }
+.log-origin { display:flex; gap:6px 12px; flex-wrap:wrap; margin-bottom:3px; color:#a3b298; font-size:10px; overflow-wrap:anywhere; }
+.log-thread { color:#94a38a; }
+.log-message { white-space:pre-wrap; overflow-wrap:anywhere; tab-size:2; }
+.log-warning { border-left-color:#d9b474; background:#d9b47407; }
+.log-warning .log-level { background:#d9b4741a; color:#ebc686; }
+.log-warning .log-message { color:#e9d4af; }
+.log-error { border-left-color:#e69b8b; background:#e69b8b0a; }
+.log-error .log-level { background:#e69b8b1a; color:#f0afa0; }
+.log-error .log-message { color:#f0c4ba; }
+.log-debug .log-level { background:#c9cfe90c; color:#b0b7cc; }
+.game-log .log-empty { display:flex; min-height:100%; padding:30px 16px; flex-direction:column; align-items:center; justify-content:center; gap:12px; text-align:center; color:#aab69e; font:12px/1.7 Inter,sans-serif; }
+.log-empty>i { font-size:26px; color:#8ea779; }
+.log-empty .text-button { font-size:12px; }
 .content-version .text-button { font-size:11px; padding:5px 0 0; }
 button:disabled { cursor:default; }
 @media(max-width:760px) {
@@ -143,8 +170,12 @@ button:disabled { cursor:default; }
   .runtime-summary { flex-wrap:wrap; }
   .java-setting input { width:100%!important; }
   .launch-readiness>div { flex-wrap:wrap; }
-  .game-log { padding:10px; font-size:10px; }
-  .game-log>div { gap:8px; }
+  .game-log { padding:4px; font-size:11px; }
+  .log-entry { grid-template-columns:54px 44px minmax(0,1fr); gap:7px; padding:9px 6px; }
+  .log-entry time { font-size:10px; }
+  .log-level { font-size:9px; }
+  .log-filters button { padding:7px 8px; font-size:11px; gap:5px; }
+  .log-summary { font-size:10px; }
 }
 .danger-action { color:#efba9b; }
 
