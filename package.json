@@ -12,6 +12,7 @@
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "test:native": "cargo test --locked --manifest-path src-tauri/Cargo.toml --lib",
     "check:publication": "node scripts/check-publication.mjs",
+    "check:glib-backport": "node scripts/check-glib-backport.mjs",
     "hooks:install": "git config --local core.hooksPath scripts/hooks"
   },
   "dependencies": {
